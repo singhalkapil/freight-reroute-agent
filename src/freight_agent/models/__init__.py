@@ -8,6 +8,7 @@ from freight_agent.models.domain import (
     RerouteDecision,
     ShipmentManifest,
     ShipmentStatus,
+    ShipmentTrackingState,
     TransportMode,
     WeatherDisruptionAlert,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "RerouteDecision",
     "ShipmentManifest",
     "ShipmentStatus",
+    "ShipmentTrackingState",
     "TransportMode",
     "WeatherDisruptionAlert",
 ]

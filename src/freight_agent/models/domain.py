@@ -135,6 +135,14 @@ class WeatherDisruptionAlert(BaseModel):
     )
     affected_corridor: str = Field(..., min_length=1, description="Name or identifier of affected transit corridor")
 
+    @field_validator("effective_until")
+    @classmethod
+    def validate_effective_until_has_timezone(cls, value: datetime) -> datetime:
+        """Enforce timezone-aware expiration timestamp to avoid offset-naive comparisons."""
+        if value.tzinfo is None:
+            raise ValueError("effective_until must be timezone-aware (e.g. UTC or explicit tz offset)")
+        return value
+
     @field_validator("polygon_coordinates")
     @classmethod
     def validate_polygon_vertices(cls, coords: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -190,4 +198,16 @@ class RerouteDecision(BaseModel):
         description="Estimated demurrage penalty saved in USD by taking reroute",
     )
     rationale: str = Field(..., min_length=1, description="Audit trail and reasoning behind decision")
+
+
+class ShipmentTrackingState(BaseModel):
+    """Dynamic operational tracking state evolved across LangGraph nodes."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    manifest: ShipmentManifest
+    current_location: Coordinates
+    status: ShipmentStatus = ShipmentStatus.IN_TRANSIT
+    accumulated_delay_hours: float = Field(default=0.0, ge=0.0)
+    active_reroute: RerouteAlternative | None = None
 

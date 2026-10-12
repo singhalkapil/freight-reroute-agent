@@ -13,6 +13,7 @@ from freight_agent.models.domain import (
     RerouteDecision,
     ShipmentManifest,
     ShipmentStatus,
+    ShipmentTrackingState,
     TransportMode,
     WeatherDisruptionAlert,
 )
@@ -182,6 +183,21 @@ class TestShipmentManifest:
         with pytest.raises(ValidationError):
             manifest.current_status = ShipmentStatus.DELAYED  # type: ignore
 
+    def test_manifest_roundtrip_json_serialization(self, valid_manifest_payload):
+        manifest = ShipmentManifest.model_validate(valid_manifest_payload)
+        raw_json = manifest.model_dump_json()
+
+        restored = ShipmentManifest.model_validate_json(raw_json)
+        assert restored == manifest
+        assert restored.sla_delivery_deadline == manifest.sla_delivery_deadline
+        assert restored.sla_delivery_deadline.tzinfo is not None
+
+    @pytest.mark.parametrize("missing_field", ["shipment_id", "origin", "destination"])
+    def test_missing_required_fields_in_manifest(self, valid_manifest_payload, missing_field):
+        del valid_manifest_payload[missing_field]
+        with pytest.raises(ValidationError):
+            ShipmentManifest.model_validate(valid_manifest_payload)
+
     def test_manifest_forbids_extra_fields(self, valid_manifest_payload):
         valid_manifest_payload["extra_field"] = "unexpected"
         with pytest.raises(ValidationError):
@@ -235,6 +251,18 @@ class TestWeatherDisruptionAlert:
                 effective_until=datetime(2026, 10, 15, 12, 0, tzinfo=UTC),
                 affected_corridor="Corridor-B",
             )
+
+    def test_alert_enforces_effective_until_timezone_awareness(self):
+        with pytest.raises(ValidationError) as exc:
+            WeatherDisruptionAlert(
+                alert_id="NWS-ALERT-NAIVE",
+                severity=AlertSeverity.MEDIUM,
+                event_type="Flash Flood",
+                polygon_coordinates=[(29.0, -95.0), (30.0, -94.0), (29.5, -93.5)],
+                effective_until=datetime(2026, 10, 15, 12, 0),  # Naive datetime
+                affected_corridor="Corridor-A",
+            )
+        assert "effective_until must be timezone-aware" in str(exc.value)
 
     def test_alert_immutability(self):
         alert = WeatherDisruptionAlert(
@@ -297,5 +325,58 @@ class TestRerouteAlternativeAndDecision:
         )
         with pytest.raises(ValidationError):
             decision.requires_human_approval = True  # type: ignore
+
+    def test_negative_additional_cost_rejected(self):
+        with pytest.raises(ValidationError) as exc:
+            RerouteAlternative(
+                route_id="ALT-NEG",
+                mode=TransportMode.ROAD,
+                distance_km=100.0,
+                estimated_transit_hours=2.0,
+                additional_cost_usd=-50.0,
+                risk_mitigated="None",
+            )
+        assert "additional_cost_usd" in str(exc.value)
+
+
+class TestShipmentTrackingState:
+    """Test dynamic runtime operational tracking state evolved across LangGraph nodes."""
+
+    def test_valid_tracking_state(self, valid_manifest_payload, valid_destination_data):
+        manifest = ShipmentManifest.model_validate(valid_manifest_payload)
+        current_coords = Coordinates(**valid_destination_data)
+
+        state = ShipmentTrackingState(
+            manifest=manifest,
+            current_location=current_coords,
+            status=ShipmentStatus.IN_TRANSIT,
+            accumulated_delay_hours=3.5,
+        )
+        assert state.manifest.shipment_id == "SHP-2026-X99"
+        assert state.accumulated_delay_hours == 3.5
+        assert state.active_reroute is None
+
+    def test_tracking_state_negative_delay_rejected(self, valid_manifest_payload, valid_destination_data):
+        manifest = ShipmentManifest.model_validate(valid_manifest_payload)
+        current_coords = Coordinates(**valid_destination_data)
+
+        with pytest.raises(ValidationError):
+            ShipmentTrackingState(
+                manifest=manifest,
+                current_location=current_coords,
+                accumulated_delay_hours=-1.0,
+            )
+
+    def test_tracking_state_immutability(self, valid_manifest_payload, valid_destination_data):
+        manifest = ShipmentManifest.model_validate(valid_manifest_payload)
+        current_coords = Coordinates(**valid_destination_data)
+
+        state = ShipmentTrackingState(
+            manifest=manifest,
+            current_location=current_coords,
+        )
+        with pytest.raises(ValidationError):
+            state.status = ShipmentStatus.DELAYED  # type: ignore
+
 
 

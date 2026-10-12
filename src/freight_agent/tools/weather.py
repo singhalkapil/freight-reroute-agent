@@ -2,21 +2,28 @@
 
 Features robust defensive recovery:
 - Handles HTTP 503 Gateway Timeouts and 5xx transient server errors with exponential backoff.
-- Handles HTTP 429 Rate Limits respecting Retry-After headers.
-- Handles null, empty, malformed, and non-polygon GeoJSON geometries gracefully.
-- Matches corridor linestrings with alert polygons using Shapely geometric intersection.
+- Handles HTTP 429 Rate Limits with capped Retry-After intervals and jitter.
+- Repairs self-intersecting / invalid GeoJSON polygons using shapely.make_valid.
+- Automatically normalizes (lat, lon) and (lon, lat) corridor coordinate ordering for spatial intersection.
 """
 
 import logging
+import random
 import time
 from datetime import UTC, datetime
 from typing import Any
 
 import httpx
+from shapely import make_valid
 from shapely.errors import GEOSException
-from shapely.geometry import LineString, MultiPolygon, Polygon, shape
+from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Polygon, shape
 
-from freight_agent.models.domain import AlertSeverity, WeatherDisruptionAlert
+from freight_agent.models.domain import (
+    AlertSeverity,
+    Coordinates,
+    PortLocation,
+    WeatherDisruptionAlert,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +49,35 @@ class NOAARateLimitError(NOAAAPIError):
     """Raised when NOAA NWS API rate limit is exceeded after retries."""
 
 
+def normalize_to_geojson_lon_lat(
+    coord_point: tuple[float, float] | Coordinates | PortLocation,
+) -> tuple[float, float]:
+    """Normalize a coordinate point into GeoJSON (longitude, latitude) format for GIS spatial testing.
+
+    In North America / Continental US:
+    - Latitude is positive (e.g., 24.0° to 72.0° N).
+    - Longitude is negative (e.g., -180.0° to -50.0° W).
+    """
+    if isinstance(coord_point, (Coordinates, PortLocation)):
+        return (coord_point.longitude, coord_point.latitude)
+
+    if isinstance(coord_point, (tuple, list)) and len(coord_point) == 2:
+        val1, val2 = float(coord_point[0]), float(coord_point[1])
+        # If val1 is positive latitude and val2 is negative longitude -> swap to (lon, lat)
+        if val1 > 0 and val2 < 0:
+            return (val2, val1)
+        # If val1 is negative longitude and val2 is positive latitude -> already (lon, lat)
+        return (val1, val2)
+
+    raise TypeError(f"Invalid coordinate representation: {coord_point}")
+
+
 class NOAAWeatherClient:
     """Client for retrieving and analyzing weather disruptions from the National Weather Service."""
 
     DEFAULT_BASE_URL: str = "https://api.weather.gov"
     DEFAULT_USER_AGENT: str = "freight-reroute-agent/0.1.0 (engineering@freight-agent.internal)"
+    DEFAULT_MAX_RETRY_AFTER: float = 60.0
 
     def __init__(
         self,
@@ -56,6 +87,7 @@ class NOAAWeatherClient:
         max_retries: int = 3,
         initial_backoff: float = 0.5,
         backoff_factor: float = 2.0,
+        max_retry_after: float = DEFAULT_MAX_RETRY_AFTER,
         client: httpx.Client | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -64,6 +96,7 @@ class NOAAWeatherClient:
         self.max_retries = max_retries
         self.initial_backoff = initial_backoff
         self.backoff_factor = backoff_factor
+        self.max_retry_after = max_retry_after
         self._headers = {
             "User-Agent": self.user_agent,
             "Accept": "application/geo+json, application/json",
@@ -98,7 +131,9 @@ class NOAAWeatherClient:
                     if retries >= self.max_retries:
                         raise NOAARateLimitError("NOAA NWS API rate limit (429) exceeded maximum retries")
                     retry_after = response.headers.get("Retry-After")
-                    sleep_time = float(retry_after) if retry_after and retry_after.isdigit() else backoff
+                    raw_sleep = float(retry_after) if retry_after and retry_after.isdigit() else backoff
+                    # Cap sleep to prevent thread lockup and add small randomized jitter
+                    sleep_time = min(raw_sleep, self.max_retry_after) + random.uniform(0.05, 0.20)
                     logger.warning("HTTP 429 Rate Limit from NOAA API. Backing off for %.2fs", sleep_time)
                     time.sleep(sleep_time)
                     retries += 1
@@ -153,7 +188,7 @@ class NOAAWeatherClient:
         self,
         feature: dict[str, Any],
     ) -> tuple[WeatherDisruptionAlert, Polygon | MultiPolygon] | None:
-        """Parse a GeoJSON alert feature defensively, discarding empty or malformed geometries."""
+        """Parse a GeoJSON alert feature defensively, repairing invalid geometries with make_valid."""
         if not isinstance(feature, dict):
             return None
 
@@ -178,9 +213,24 @@ class NOAAWeatherClient:
             logger.warning("Failed to construct Shapely geometry for alert %s: %s", props.get("id"), err)
             return None
 
-        if geom.is_empty or not geom.is_valid:
-            logger.debug("Skipping alert feature %s: geometry is empty or invalid", props.get("id"))
+        if geom.is_empty:
+            logger.debug("Skipping alert feature %s: geometry is empty", props.get("id"))
             return None
+
+        # Repair invalid geometries (e.g., self-intersecting bow-tie polygons from NWS)
+        if not geom.is_valid:
+            try:
+                geom = make_valid(geom)
+            except Exception as err:
+                logger.warning("Failed to repair invalid geometry for alert %s: %s", props.get("id"), err)
+                return None
+
+        # Resolve polygon or multi-polygon from repaired geometry
+        if isinstance(geom, GeometryCollection):
+            poly_elements = [g for g in geom.geoms if isinstance(g, (Polygon, MultiPolygon))]
+            if not poly_elements:
+                return None
+            geom = max(poly_elements, key=lambda p: p.area)
 
         # Extract polygon coordinates as list of (lat, lon)
         poly_coords: list[tuple[float, float]] = []
@@ -235,19 +285,25 @@ class NOAAWeatherClient:
 
     def check_corridor_disruptions(
         self,
-        corridor_linestring: LineString | list[tuple[float, float]],
+        corridor_linestring: LineString | list[tuple[float, float]] | list[Coordinates | PortLocation],
         status: str = "actual",
     ) -> list[WeatherDisruptionAlert]:
-        """Test geometric intersection between a freight corridor line and active NOAA alert polygons."""
-        # Convert corridor coordinates into a Shapely LineString (in lon, lat for GeoJSON consistency)
+        """Test geometric intersection between a freight corridor and active NOAA alert polygons.
+
+        Accepts Shapely LineString, list of (lat, lon) / (lon, lat) tuples, or list of Coordinates.
+        Automatically normalizes coordinate ordering to GeoJSON (lon, lat) for GIS testing.
+        """
         if isinstance(corridor_linestring, LineString):
-            corridor_geom = corridor_linestring
+            raw_pts = list(corridor_linestring.coords)
+            normalized_pts = [normalize_to_geojson_lon_lat(p) for p in raw_pts]
+            corridor_geom = LineString(normalized_pts)
         elif isinstance(corridor_linestring, list):
-            if not corridor_linestring or len(corridor_linestring) < 2:
+            if len(corridor_linestring) < 2:
                 raise ValueError("corridor_linestring must contain at least 2 points")
-            corridor_geom = LineString(corridor_linestring)
+            normalized_pts = [normalize_to_geojson_lon_lat(p) for p in corridor_linestring]
+            corridor_geom = LineString(normalized_pts)
         else:
-            raise TypeError("corridor_linestring must be a Shapely LineString or list of coordinate tuples")
+            raise TypeError("corridor_linestring must be a Shapely LineString or list of coordinates")
 
         features = self.fetch_active_alerts(status=status)
         intersecting_alerts: list[WeatherDisruptionAlert] = []

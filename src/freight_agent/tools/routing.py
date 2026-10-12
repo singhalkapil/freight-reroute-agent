@@ -3,12 +3,13 @@
 Calculates deterministic multimodal route metrics (ROAD, RAIL, BARGE):
 - Transit time and distance using Overpass API or Haversine with empirical intermodal multipliers.
 - Fuel and operational surcharges.
-- Perishability-adjusted demurrage penalties.
-- In-memory LRU caching to eliminate redundant queries.
+- Perishability and contractual SLA deadline demurrage penalties.
+- In-memory LRU caching to eliminate redundant network queries.
 """
 
 import logging
 import math
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Any
 
@@ -78,20 +79,79 @@ def calculate_haversine_distance_km(
 
 
 @lru_cache(maxsize=512)
+def _cached_query_overpass(
+    overpass_url: str,
+    origin_lat: float,
+    origin_lon: float,
+    dest_lat: float,
+    dest_lon: float,
+    mode: TransportMode,
+    timeout: float = 5.0,
+) -> float | None:
+    """Cached network query to Overpass API to determine infrastructure availability."""
+    if mode == TransportMode.RAIL:
+        tag_filter = '["railway"~"rail"]'
+    elif mode == TransportMode.BARGE:
+        tag_filter = '["waterway"~"canal|river"]'
+    else:
+        tag_filter = '["highway"~"motorway|trunk|primary"]'
+
+    min_lat = min(origin_lat, dest_lat) - 0.5
+    max_lat = max(origin_lat, dest_lat) + 0.5
+    min_lon = min(origin_lon, dest_lon) - 0.5
+    max_lon = max(origin_lon, dest_lon) + 0.5
+
+    query = (
+        f"[out:json][timeout:{int(timeout)}];"
+        f"(way{tag_filter}({min_lat},{min_lon},{max_lat},{max_lon}););"
+        f"out count;"
+    )
+
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(
+                overpass_url,
+                data={"data": query},
+                headers={"User-Agent": "freight-reroute-agent/0.1.0"},
+            )
+            if response.status_code == 200:
+                data = response.json()
+                count = int(data.get("elements", [{}])[0].get("tags", {}).get("ways", 0))
+                if count > 0:
+                    direct_dist = calculate_haversine_distance_km(
+                        origin_lat, origin_lon, dest_lat, dest_lon
+                    )
+                    multiplier = MODE_PARAMETERS[mode]["distance_multiplier"]
+                    return round(direct_dist * multiplier, 2)
+    except Exception as err:
+        logger.debug("Overpass API query failed: %s; falling back to Haversine", err)
+
+    return None
+
+
+@lru_cache(maxsize=512)
 def compute_intermodal_metrics_cached(
     origin_lat: float,
     origin_lon: float,
     dest_lat: float,
     dest_lon: float,
     mode: TransportMode,
-    overpass_distance: float | None = None,
+    overpass_url: str | None = None,
+    enable_online: bool = True,
 ) -> tuple[float, float, float]:
-    """Compute (distance_km, transit_hours, fuel_cost_usd) for a mode with LRU caching."""
-    params = MODE_PARAMETERS[mode]
+    """Compute (distance_km, transit_hours, fuel_cost_usd) for a mode with LRU caching.
 
-    if overpass_distance is not None:
-        distance_km = overpass_distance
-    else:
+    Performs network query only on cache miss; subsequent calls return instantly from memory.
+    """
+    params = MODE_PARAMETERS[mode]
+    distance_km: float | None = None
+
+    if enable_online and overpass_url:
+        distance_km = _cached_query_overpass(
+            overpass_url, origin_lat, origin_lon, dest_lat, dest_lon, mode
+        )
+
+    if distance_km is None:
         direct_dist = calculate_haversine_distance_km(
             origin_lat, origin_lon, dest_lat, dest_lon
         )
@@ -133,56 +193,6 @@ class IntermodalRouteSolver:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         self.close()
 
-    def _query_overpass_distance(
-        self,
-        origin: tuple[float, float],
-        destination: tuple[float, float],
-        mode: TransportMode,
-    ) -> float | None:
-        """Query Overpass API for infrastructure network distance, returning None on failure."""
-        if not self.enable_online_lookup:
-            return None
-
-        # Determine OSM highway/railway tag filter
-        if mode == TransportMode.RAIL:
-            tag_filter = '["railway"~"rail"]'
-        elif mode == TransportMode.BARGE:
-            tag_filter = '["waterway"~"canal|river"]'
-        else:
-            tag_filter = '["highway"~"motorway|trunk|primary"]'
-
-        min_lat = min(origin[0], destination[0]) - 0.5
-        max_lat = max(origin[0], destination[0]) + 0.5
-        min_lon = min(origin[1], destination[1]) - 0.5
-        max_lon = max(origin[1], destination[1]) + 0.5
-
-        query = (
-            f"[out:json][timeout:5];"
-            f"(way{tag_filter}({min_lat},{min_lon},{max_lat},{max_lon}););"
-            f"out count;"
-        )
-
-        try:
-            response = self._client.post(
-                self.overpass_url,
-                data={"data": query},
-                headers={"User-Agent": "freight-reroute-agent/0.1.0"},
-            )
-            if response.status_code == 200:
-                data = response.json()
-                count = int(data.get("elements", [{}])[0].get("tags", {}).get("ways", 0))
-                if count > 0:
-                    # Overpass confirmed active route corridor; calculate network-scaled distance
-                    direct_dist = calculate_haversine_distance_km(
-                        origin[0], origin[1], destination[0], destination[1]
-                    )
-                    multiplier = MODE_PARAMETERS[mode]["distance_multiplier"]
-                    return round(direct_dist * multiplier, 2)
-        except Exception as err:
-            logger.debug("Overpass API query failed or timed out: %s; falling back to Haversine", err)
-
-        return None
-
     def compute_route_metrics(
         self,
         origin_lat: float,
@@ -192,11 +202,14 @@ class IntermodalRouteSolver:
         mode: TransportMode,
     ) -> tuple[float, float, float]:
         """Compute (distance_km, transit_hours, fuel_cost_usd) for a specific mode with LRU caching."""
-        overpass_dist = self._query_overpass_distance(
-            (origin_lat, origin_lon), (dest_lat, dest_lon), mode
-        )
         return compute_intermodal_metrics_cached(
-            origin_lat, origin_lon, dest_lat, dest_lon, mode, overpass_dist
+            origin_lat=origin_lat,
+            origin_lon=origin_lon,
+            dest_lat=dest_lat,
+            dest_lon=dest_lon,
+            mode=mode,
+            overpass_url=self.overpass_url,
+            enable_online=self.enable_online_lookup,
         )
 
     @staticmethod
@@ -206,22 +219,37 @@ class IntermodalRouteSolver:
 
     @staticmethod
     def cache_clear():
-        """Clear all entries in the metrics LRU cache."""
+        """Clear all entries in the metrics and overpass LRU caches."""
         compute_intermodal_metrics_cached.cache_clear()
+        _cached_query_overpass.cache_clear()
 
     def calculate_demurrage_penalty(
         self,
         manifest: ShipmentManifest,
         transit_hours: float,
+        departure_time: datetime | None = None,
     ) -> float:
-        """Calculate estimated demurrage and spoilage penalties based on deadlines and perishability."""
+        """Calculate estimated demurrage penalties based on contractual SLA deadlines and cargo perishability."""
         penalties = 0.0
 
-        # Perishability spoilage penalty: if transit time exceeds cold chain threshold
+        # 1. Contractual SLA deadline breach penalty
+        if departure_time is None:
+            departure_time = datetime.now(UTC)
+        elif departure_time.tzinfo is None:
+            departure_time = departure_time.replace(tzinfo=UTC)
+
+        estimated_arrival = departure_time + timedelta(hours=transit_hours)
+        if estimated_arrival > manifest.sla_delivery_deadline:
+            excess_seconds = (estimated_arrival - manifest.sla_delivery_deadline).total_seconds()
+            excess_days = excess_seconds / 86400.0
+            sla_penalty = excess_days * manifest.demurrage_rate_per_day
+            penalties += sla_penalty
+
+        # 2. Perishability spoilage penalty: if transit time exceeds cold chain threshold
         if manifest.perishability_hours is not None:
             if transit_hours > manifest.perishability_hours:
                 hours_spoiled = transit_hours - manifest.perishability_hours
-                # Heavy demurrage surcharge for perished freight (3x standard daily rate for each excess day)
+                # Surcharge for perished freight (3x standard daily rate for each excess day)
                 spoilage_penalty = (hours_spoiled / 24.0) * (manifest.demurrage_rate_per_day * 3.0)
                 penalties += spoilage_penalty
 

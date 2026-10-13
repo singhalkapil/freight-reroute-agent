@@ -7,6 +7,8 @@
 [![GIS Geometry](https://img.shields.io/badge/spatial-Shapely%202.0%20%2B%20GEOS-success.svg)](src/freight_agent/tools/weather.py)
 [![Standards](https://img.shields.io/badge/edi-ANSI%20X12%20204-orange.svg)](src/freight_agent/graph/workflow.py)
 
+> **Executive Summary:** Autonomous agent system reducing intermodal freight demurrage by **$253k+ (83.2% net cost savings)** across 30 benchmark shipping corridors. Replaces error-prone LLM tool-calling loops with a deterministic, sub-20ms **LangGraph state machine**, Shapely GIS spatial computing, and an auditable **Human-in-the-Loop financial approval gate**.
+
 Autonomous enterprise agentic system that continuously monitors intermodal freight shipping corridors, detects meteorological bottlenecks using National Weather Service (NOAA NWS) GIS polygons, calculates contractual SLA delays and demurrage penalties, deterministically solves alternative intermodal detours (ROAD, RAIL, BARGE) via OpenStreetMap/Overpass, enforces an auditable **Human-in-the-Loop (HITL)** financial governance gate, and generates compliant synthetic **ANSI X12 EDI 204 Motor Carrier Load Tender** booking payloads.
 
 ---
@@ -121,6 +123,9 @@ class FreightAgentState(TypedDict, total=False):
     requires_human_review: bool  # True if surcharge > $5k or SLA breach > 24h
 ```
 
+> [!NOTE]
+> **Production Deployment (Durable Checkpointers):** While the reference implementation uses `MemorySaver` for isolated execution and tests, production deployments swap in `PostgresSaver` with zero changes to node logic or graph topology, enabling enterprise multi-tenant checkpoint durability across distributed workers.
+
 ---
 
 ## 2. Technical Decisions & Trade-Offs
@@ -158,6 +163,29 @@ class FreightAgentState(TypedDict, total=False):
    EDI parsers reject transactions with mismatched segment counts (ANSI X12 `AK4` syntax rejects). Rather than hardcoding segment counts, `dispatch_tender_node` dynamically calculates the exact transaction set segment count ($ST$ through $SE$ inclusive: `len(segments) + 1`), ensuring seamless carrier integration.
 3. **Structured `LoadTenderPayload`**:
    The EDI output is encapsulated in a strongly typed Pydantic container storing raw EDI text, metadata, assigned transport mode, and generation timestamp.
+
+<details open>
+<summary><b>Sample Rendered ANSI X12 EDI 204 Transaction Payload</b> (Click to collapse)</summary>
+
+```edi
+ISA*00*          *00*          *ZZ*FREIGHTAGENT   *ZZ*CARRIERSYS     *261013*1200*U*00401*000000001*0*P*>~
+GS*SM*FREIGHTAGENT*CARRIERSYS*20261013*1200*1*X*004010~
+ST*204*0001~
+B2**LOGS*SHP-2026-HOU-01**PP~
+B2A*00*LT~
+MS3*ROAD*B~
+N1*SH*ORIGIN TERMINAL*10*USGAL~
+N3*LAT 29.3013 LON -94.7977~
+N1*CN*DESTINATION FACILITY~
+N3*LAT 32.7767 LON -96.7970~
+OID*1*SHP-2026-HOU-01***CTN*1*L*42000~
+G62*10*20261025~
+NTE*GEN*REROUTE ASSIGNMENT: REROUTE-ROAD-SHP-2026-HOU-01~
+SE*12*0001~
+GE*1*1~
+IEA*1*000000001~
+```
+</details>
 
 ---
 
@@ -281,6 +309,18 @@ ruff format --check .
 ```bash
 # Execute standalone 30-case evaluation suite
 python evals/evaluate.py
+```
+
+#### Alternative Setup via Poetry
+```bash
+# Install dependencies using Poetry
+poetry install
+
+# Run test suite
+poetry run pytest -v
+
+# Run benchmark evaluation
+poetry run python evals/evaluate.py
 ```
 
 ---

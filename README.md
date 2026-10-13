@@ -1,16 +1,17 @@
 # Freight Reroute Agent (`freight-reroute-agent`)
 
-[![CI Tests](https://img.shields.io/badge/tests-89%20passed-brightgreen.svg)](tests/)
+[![CI Tests](https://img.shields.io/badge/tests-100%20passed-brightgreen.svg)](tests/)
 [![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](pyproject.toml)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-000000.svg)](pyproject.toml)
 [![Architecture](https://img.shields.io/badge/orchestration-LangGraph%20HITL-blueviolet.svg)](src/freight_agent/graph/)
 [![GIS Geometry](https://img.shields.io/badge/spatial-Shapely%202.0%20%2B%20GEOS-success.svg)](src/freight_agent/tools/weather.py)
 [![Standards](https://img.shields.io/badge/edi-ANSI%20X12%20204-orange.svg)](src/freight_agent/graph/workflow.py)
+[![GenAI Additions](https://img.shields.io/badge/LLM-Structured%20Output%20%2B%20Advisory-purple.svg)](src/freight_agent/parser/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Executive Summary:** Autonomous agent system reducing intermodal freight demurrage by **$253k+ (83.2% net cost savings)** across 30 benchmark shipping corridors. Replaces error-prone LLM tool-calling loops with a deterministic, sub-20ms **LangGraph state machine**, Shapely GIS spatial computing, and an auditable **Human-in-the-Loop financial approval gate**.
+> **Executive Summary:** Autonomous agent system reducing intermodal freight demurrage by **$253k+ (83.2% net cost savings)** across 30 benchmark shipping corridors. Replaces error-prone LLM tool-calling loops with a deterministic, sub-20ms **LangGraph state machine**, Shapely GIS spatial computing, an auditable **Human-in-the-Loop financial approval gate**, unstructured **BOL & dispatch email ingestion**, and audit-ready **executive incident briefs**.
 
-Autonomous enterprise agentic system that continuously monitors intermodal freight shipping corridors, detects meteorological bottlenecks using National Weather Service (NOAA NWS) GIS polygons, calculates contractual SLA delays and demurrage penalties, deterministically solves alternative intermodal detours (ROAD, RAIL, BARGE) via OpenStreetMap/Overpass, enforces an auditable **Human-in-the-Loop (HITL)** financial governance gate, and generates compliant synthetic **ANSI X12 EDI 204 Motor Carrier Load Tender** booking payloads.
+Autonomous enterprise agentic system that continuously monitors intermodal freight shipping corridors, detects meteorological bottlenecks using National Weather Service (NOAA NWS) GIS polygons, calculates contractual SLA delays and demurrage penalties, deterministically solves alternative intermodal detours (ROAD, RAIL, BARGE) via OpenStreetMap/Overpass, enforces an auditable **Human-in-the-Loop (HITL)** financial governance gate, and generates compliant synthetic **ANSI X12 EDI 204 Motor Carrier Load Tender** booking payloads alongside plain-language **Driver Advisories & Executive Incident Briefs**.
 
 ---
 
@@ -20,22 +21,27 @@ Autonomous enterprise agentic system that continuously monitors intermodal freig
   - [Workflow State Machine (LangGraph)](#workflow-state-machine-langgraph)
   - [Component Architecture & Tool Interfaces](#component-architecture--tool-interfaces)
   - [State Contract (`FreightAgentState`)](#state-contract-freightagentstate)
-- [2. Technical Decisions & Trade-Offs](#2-technical-decisions--trade-offs)
+- [2. Generative AI Architecture & Guardrails](#2-generative-ai-architecture--guardrails)
+  - [Unstructured Manifest Ingestion (`manifest_parser.py`)](#unstructured-manifest-ingestion-input-layer)
+  - [Executive Incident Brief & Driver Advisory (`advisory_node.py`)](#executive-incident-brief--driver-advisory-output-layer)
+  - [Zero Math Hallucination & Strict Deterministic Grounding](#zero-math-hallucination--strict-deterministic-grounding)
+- [3. Technical Decisions & Trade-Offs](#3-technical-decisions--trade-offs)
   - [LangGraph State Machine vs. Naive ReAct Loops](#decision-1-langgraph-state-machine-vs-naive-react-loops)
   - [Deterministic Shapely GIS vs. LLM Spatial Hallucination](#decision-2-deterministic-shapely-computational-geometry-vs-llm-spatial-guessing)
   - [Immutable Pydantic v2 Contracts & Dynamic ANSI X12 Syntax](#decision-3-immutable-pydantic-v2-contracts--dynamic-ansi-x12-syntax)
-- [3. Quantitative Evaluation Suite & Benchmark](#3-quantitative-evaluation-suite--benchmark)
+- [4. Quantitative Evaluation Suite & Benchmark](#4-quantitative-evaluation-suite--benchmark)
   - [Benchmark Dataset Structure (30 Scenarios)](#benchmark-dataset-structure-30-scenarios)
   - [Achieved Benchmark Performance Metrics](#achieved-benchmark-performance-metrics)
   - [Category Performance Breakdown](#category-performance-breakdown)
-- [4. Project Structure](#4-project-structure)
-- [5. Quickstart & Deployment](#5-quickstart--deployment)
+- [5. Project Structure](#5-project-structure)
+- [6. Quickstart & Deployment](#6-quickstart--deployment)
   - [Local Environment Setup (Virtualenv)](#local-environment-setup-virtualenv)
   - [Docker Container Workflow](#docker-container-workflow)
-- [6. Programmatic Usage Examples](#6-programmatic-usage-examples)
-  - [Standard End-to-End Execution](#example-1-standard-end-to-end-execution)
-  - [Real-Time Execution Event Streaming](#example-2-real-time-execution-event-streaming)
-  - [Human-in-the-Loop Checkpoint Pause and Resume](#example-3-human-in-the-loop-checkpoint-pause-and-resume)
+- [7. Programmatic Usage Examples](#7-programmatic-usage-examples)
+  - [Unstructured Carrier Email & Dispatch Note Ingestion](#example-1-unstructured-carrier-email--dispatch-note-ingestion)
+  - [Standard End-to-End Execution with Incident Advisory](#example-2-standard-end-to-end-execution-with-incident-advisory)
+  - [Real-Time Execution Event Streaming](#example-3-real-time-execution-event-streaming)
+  - [Human-in-the-Loop Checkpoint Pause and Resume](#example-4-human-in-the-loop-checkpoint-pause-and-resume)
 
 ---
 
@@ -43,7 +49,7 @@ Autonomous enterprise agentic system that continuously monitors intermodal freig
 
 ### Workflow State Machine (LangGraph)
 
-The core routing and evaluation engine is implemented as a compiled state graph using [LangGraph](https://github.com/langchain-ai/langgraph). The graph guarantees deterministic execution, strict conditional branch routing, append-only audit tracking, and asynchronous checkpoint persistence for human reviews.
+The core routing and evaluation engine is implemented as a compiled state graph using [LangGraph](https://github.com/langchain-ai/langgraph). The graph guarantees deterministic execution, strict conditional branch routing, append-only audit tracking, asynchronous checkpoint persistence for human reviews, and zero-hallucination narrative generation.
 
 ```mermaid
 flowchart TD
@@ -54,7 +60,9 @@ flowchart TD
     C1 -- No Disruption --> N5[Node 5: dispatch_tender\nGenerate Primary EDI 204 Load Tender]
     C1 -- Active Alert --> N3[Node 3: calculate_alternatives\nIntermodal Detour Solver: ROAD, RAIL, BARGE]
     
-    N3 --> C2{Financial / SLA Gate\nAdditional Cost > $5,000 OR\nSLA Delay > 24 Hours?}
+    N3 --> ADV[Node: generate_advisory\nLLM Incident Brief & Driver Advisory\nStrictly Grounded in Deterministic Metrics]
+    
+    ADV --> C2{Financial / SLA Gate\nAdditional Cost > $5,000 OR\nSLA Delay > 24 Hours?}
     
     C2 -- Escalation Threshold Breached --> N4[Node 4: human_review\nLangGraph interrupt checkpoint\nAwaits Dispatcher Console Sign-off]
     C2 -- Within Operational Limits --> N5
@@ -67,10 +75,12 @@ flowchart TD
 
     classDef primary fill:#2563eb,stroke:#1d4ed8,color:#ffffff,stroke-width:2px;
     classDef gate fill:#d97706,stroke:#b45309,color:#ffffff,stroke-width:2px;
+    classDef llm fill:#7c3aed,stroke:#6d28d9,color:#ffffff,stroke-width:2px;
     classDef interrupt fill:#dc2626,stroke:#b91c1c,color:#ffffff,stroke-width:2px;
     classDef success fill:#16a34a,stroke:#15803d,color:#ffffff,stroke-width:2px;
 
     class N1,N2,N3,N5 primary;
+    class ADV llm;
     class C1,C2,C3 gate;
     class N4 interrupt;
     class END_SUCCESS success;
@@ -80,31 +90,40 @@ flowchart TD
 
 ```mermaid
 graph LR
-    subgraph Client / Orchestrator
-        Runner[FreightAgentRunner\nStreaming & Checkpoints]
+    subgraph Input Layer
+        Parser[UnstructuredManifestParser\nLangChain Structured Output\n+ Port Geocoding Fallback]
     end
 
-    subgraph LangGraph State Machine
+    subgraph Orchestrator & State Machine
+        Runner[FreightAgentRunner\nStreaming & Checkpoints]
         Graph[StateGraph Workflow]
         State[(FreightAgentState\nThread MemorySaver)]
     end
 
-    subgraph External Tool Integrations
+    subgraph Deterministic Engines & GIS
         NOAA[NOAAWeatherClient\nNWS Alerts + Shapely GEOS]
         Solver[IntermodalRouteSolver\nOSM Overpass + Haversine Fallback]
+    end
+
+    subgraph Output & Audit Layer
+        Advisory[AdvisoryNode\nDriver Warning + Executive Brief]
         EDI[EDI 204 Generator\nANSI X12 Transaction Set Builder]
     end
 
+    Parser --> Runner
     Runner <--> Graph
     Graph <--> State
     Graph --> NOAA
     Graph --> Solver
+    Graph --> Advisory
     Graph --> EDI
 ```
 
-1. **`NOAAWeatherClient`**: Connects to the National Weather Service API (`api.weather.gov/alerts/active`). Normalizes coordinates to GeoJSON $(X, Y) = (\text{lon}, \text{lat})$, repairs malformed/self-intersecting polygons with Shapely `make_valid`, and performs exact line-string intersection testing against freight transit lanes.
-2. **`IntermodalRouteSolver`**: Queries OpenStreetMap via Overpass API with in-memory LRU caching (`@lru_cache(maxsize=512)`) and automatic fallback to spherical Haversine formulas with mode-specific network curvature multipliers. Computes fuel burn, handling time, demurrage penalties, and perishable spoilage risks across **ROAD**, **RAIL**, and **BARGE**.
-3. **`FreightAgentRunner`**: Manages workflow execution lifecycles, assigns and retains execution `thread_id`s, exposes an asynchronous/synchronous generator for streaming node execution logs, and resumes paused threads through `Command(resume={...})`.
+1. **`UnstructuredManifestParser`**: Ingests messy text (carrier emails, OCR'd Bills of Lading), runs prompt injection sanitization, applies LangChain `.with_structured_output(...)`, and deterministically resolves missing port coordinates using standard UN/LOCODE tables.
+2. **`NOAAWeatherClient`**: Connects to the National Weather Service API (`api.weather.gov/alerts/active`). Normalizes coordinates to GeoJSON $(X, Y) = (\text{lon}, \text{lat})$, repairs malformed/self-intersecting polygons with Shapely `make_valid`, and performs exact line-string intersection testing against freight transit lanes.
+3. **`IntermodalRouteSolver`**: Queries OpenStreetMap via Overpass API with in-memory LRU caching (`@lru_cache(maxsize=512)`) and automatic fallback to spherical Haversine formulas with mode-specific network curvature multipliers. Computes fuel burn, handling time, demurrage penalties, and perishable spoilage risks across **ROAD**, **RAIL**, and **BARGE**.
+4. **`make_generate_advisory_node`**: Synthesizes structured driver routing instructions, NOAA weather hazard warnings, and executive ROI rationales. Demurrage penalties, detour surcharge costs, and transit times are directly injected from state variables to prevent arithmetic hallucinations.
+5. **`FreightAgentRunner`**: Manages workflow execution lifecycles, assigns and retains execution `thread_id`s, exposes an asynchronous/synchronous generator for streaming node execution logs, and resumes paused threads through `Command(resume={...})`.
 
 ### State Contract (`FreightAgentState`)
 
@@ -122,6 +141,7 @@ class FreightAgentState(TypedDict, total=False):
     edi_tender_payload: LoadTenderPayload | None  # Final EDI 204 booking payload
     current_corridor_disrupted: bool  # True if corridor intersects storm
     requires_human_review: bool  # True if surcharge > $5k or SLA breach > 24h
+    incident_advisory: IncidentAdvisoryBrief | None  # Grounded driver & executive brief
 ```
 
 > [!NOTE]
@@ -129,13 +149,62 @@ class FreightAgentState(TypedDict, total=False):
 
 ---
 
-## 2. Technical Decisions & Trade-Offs
+## 2. Generative AI Architecture & Guardrails
+
+### Unstructured Manifest Ingestion (Input Layer)
+*Location:* [`src/freight_agent/parser/manifest_parser.py`](src/freight_agent/parser/manifest_parser.py)
+
+Enterprise logistics operations receive shipping instructions across unstructured media: emails, scanned PDFs, dispatch notes, and manual EDI fallback forms. 
+- **Pydantic Structured Output**: Employs LangChain `.with_structured_output(RawExtractedManifest)` to enforce extraction of shipment IDs, UN/LOCODE port codes, cargo commodities, cold chain shelf-life limits, demurrage penalty rates, and ISO-8601 UTC delivery deadlines.
+- **Deterministic Port Geocoding Fallback**: Natural language texts frequently omit latitude and longitude coordinates. The parser integrates `KNOWN_PORT_COORDINATES` mapping standard UN/LOCODEs (`USLAX`, `USNYC`, `USCHI`, `USGAL`, `USSEA`, `USHOU`, etc.) to precise coordinates, eliminating geocoding hallucinations.
+- **Prompt Injection Defense**: Sanitizes input strings against adversarial system prompt overrides, role hijackings, and jailbreak tokens (`ignore prior instructions`, `you are now a`, `system prompt`) before LLM ingestion.
+
+### Executive Incident Brief & Driver Advisory (Output Layer)
+*Location:* [`src/freight_agent/graph/advisory_node.py`](src/freight_agent/graph/advisory_node.py)
+
+Executed immediately following candidate route selection:
+1. **Driver Advisory**: Clear, plain-language turn-by-turn routing directives, designated rest havens/intermodal staging depots, and NOAA weather hazard warnings (flash floods, blizzards, gale-force winds).
+2. **Executive Incident Narrative**: Senior-level business justification for the detour, explaining the exact delay avoided, net ROI, and cold-chain protection.
+3. **Resilient Fallback Mode**: If external LLM APIs experience rate-limits or timeouts, the node falls back gracefully to a deterministic template without interrupting the state machine.
+
+### Zero Math Hallucination & Strict Deterministic Grounding
+
+```
+ ┌──────────────────────────────────────────────────────────────┐
+ │               DETERMINISTIC GRAPH NODES                      │
+ │                                                              │
+ │   Route Solver Surcharge:      $2,800.00 USD                 │
+ │   Demurrage Penalty Saved:     $6,000.00 USD                 │
+ │   Detour Transit Duration:     36.0 hours                    │
+ │   SLA Breach Delay:            0.0 hours                     │
+ └───────────────────────────────┬──────────────────────────────┘
+                                 │
+                                 ▼ (Injected Directly into State)
+ ┌──────────────────────────────────────────────────────────────┐
+ │             LLM INCIDENT ADVISORY BRIEF                      │
+ │                                                              │
+ │   driver_instructions:   "Divert via rail ramp..." (Qualitative)
+ │   weather_hazards:       "NOAA Flash Flood..."     (Qualitative)
+ │                                                              │
+ │   additional_cost_usd:         $2,800.00  ◄── ZERO MATH      │
+ │   estimated_penalty_saved:     $6,000.00  ◄── HALLUCINATION  │
+ │   estimated_transit_hours:     36.0 hours ◄── STRICT         │
+ │   requires_human_approval:     False      ◄── GROUNDING      │
+ └──────────────────────────────────────────────────────────────┘
+```
+
+> [!IMPORTANT]
+> **Zero Math Hallucination Guarantee:** The LLM is **never** permitted to calculate, adjust, or infer cost deltas, demurrage savings, or transit durations. All numeric figures are computed deterministically by `IntermodalRouteSolver` and directly stamped onto the final immutable `IncidentAdvisoryBrief` model.
+
+---
+
+## 3. Technical Decisions & Trade-Offs
 
 ### Decision 1: LangGraph State Machine vs. Naive ReAct Loops
 
 | Architectural Consideration | Naive ReAct LLM Loop | LangGraph Explicit State Machine (Chosen) |
 | :--- | :--- | :--- |
-| **Execution Determinism** | Low. LLMs can enter infinite tool loops, alter tool arguments arbitrarily, or skip required validation steps. | **Absolute.** Explicit graph edges strictly enforce the execution order: Inspect $\to$ Detect $\to$ Solve $\to$ Gate $\to$ Tender. |
+| **Execution Determinism** | Low. LLMs can enter infinite tool loops, alter tool arguments arbitrarily, or skip required validation steps. | **Absolute.** Explicit graph edges strictly enforce the execution order: Inspect $\to$ Detect $\to$ Solve $\to$ Advisory $\to$ Gate $\to$ Tender. |
 | **Long-Running HITL Pauses** | Fragile. Waiting for manual approval requires keeping LLM context in memory or polling external APIs. | **Native Checkpointing.** Graph execution halts at the `human_review` node using `interrupt()`. State is serialized to a checkpointer (`MemorySaver` or durable storage) and can be resumed days later. |
 | **Execution Latency & Cost** | High. Multiple LLM roundtrips take $3\text{–}15\text{ seconds}$ and accrue token costs per shipment. | **Sub-20ms Latency.** Pure Python execution with zero token cost for deterministic routing and validation logic. |
 | **Auditability & Compliance** | Difficult. Reasoning traces in LLM output are unstructured and subject to non-deterministic wording. | **Structured Audit Trail.** Strongly typed Pydantic models with append-only logging (`operator.add`) providing ISO/SOC2 auditable traces. |
@@ -159,7 +228,7 @@ class FreightAgentState(TypedDict, total=False):
 ### Decision 3: Immutable Pydantic v2 Contracts & Dynamic ANSI X12 Syntax
 
 1. **Defensive Model Validation (`extra="forbid"`, `frozen=True`)**:
-   All core domain models ([`ShipmentManifest`](src/freight_agent/models/domain.py), [`WeatherDisruptionAlert`](src/freight_agent/models/domain.py), [`RerouteAlternative`](src/freight_agent/models/domain.py)) are immutable. They enforce timezone awareness on all deadlines, non-negative demurrage accrual rates, and coordinate bounds ($-90.0 \le \text{lat} \le 90.0$).
+   All core domain models ([`ShipmentManifest`](src/freight_agent/models/domain.py), [`WeatherDisruptionAlert`](src/freight_agent/models/domain.py), [`RerouteAlternative`](src/freight_agent/models/domain.py), [`IncidentAdvisoryBrief`](src/freight_agent/models/domain.py)) are immutable. They enforce timezone awareness on all deadlines, non-negative demurrage accrual rates, and coordinate bounds ($-90.0 \le \text{lat} \le 90.0$).
 2. **Dynamic EDI 204 Segment Counting**:
    EDI parsers reject transactions with mismatched segment counts (ANSI X12 `AK4` syntax rejects). Rather than hardcoding segment counts, `dispatch_tender_node` dynamically calculates the exact transaction set segment count ($ST$ through $SE$ inclusive: `len(segments) + 1`), ensuring seamless carrier integration.
 3. **Structured `LoadTenderPayload`**:
@@ -190,7 +259,7 @@ IEA*1*000000001~
 
 ---
 
-## 3. Quantitative Evaluation Suite & Benchmark
+## 4. Quantitative Evaluation Suite & Benchmark
 
 The standalone evaluation harness in [`evals/evaluate.py`](evals/evaluate.py) executes the agent across a rigorous 30-case benchmark dataset ([`evals/disruption_scenarios.json`](evals/disruption_scenarios.json)) testing the complete geospatial intersection, intermodal routing, and approval gating pipelines.
 
@@ -225,7 +294,7 @@ Results generated from [`evals/evaluate.py`](evals/evaluate.py) (persisted in [`
 ### Category Performance Breakdown
 
 | Category | Cases | Detour Rate | Approval Halted | Avg Detour Surcharge | Total Net Savings | Mean Latency |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | `CLEAR_WEATHER` | 10 | $0/10$ | $0/10$ | \$0.00 | \$0.00 | 12.38 ms |
 | `SEVERE_DISRUPTION` | 10 | $10/10$ | $0/10$ | \$1,361.57 | \$68,184.33 | 11.43 ms |
 | `HIGH_COST_ESCALATION` | 5 | $5/5$ | $5/5$ | \$6,455.90 | \$49,120.51 | 11.66 ms |
@@ -233,7 +302,7 @@ Results generated from [`evals/evaluate.py`](evals/evaluate.py) (persisted in [`
 
 ---
 
-## 4. Project Structure
+## 5. Project Structure
 
 ```
 freight-reroute-agent/
@@ -244,9 +313,12 @@ freight-reroute-agent/
 ├── src/
 │   └── freight_agent/
 │       ├── __init__.py
+│       ├── parser/             # Unstructured LLM ingestion & geocoding
+│       │   ├── __init__.py
+│       │   └── manifest_parser.py # UnstructuredManifestParser with LangChain
 │       ├── models/             # Pydantic v2 domain schemas & contracts
 │       │   ├── __init__.py
-│       │   └── domain.py       # ShipmentManifest, Coordinates, Alerts, EDI schemas
+│       │   └── domain.py       # ShipmentManifest, Alerts, Briefs, EDI schemas
 │       ├── tools/              # Spatial GIS & Intermodal Routing engines
 │       │   ├── __init__.py
 │       │   ├── routing.py      # IntermodalRouteSolver with OSM/Overpass & LRU cache
@@ -254,13 +326,16 @@ freight-reroute-agent/
 │       └── graph/              # LangGraph workflow orchestration
 │           ├── __init__.py
 │           ├── state.py        # FreightAgentState TypedDict definition
+│           ├── advisory_node.py # LLM Incident Brief & Driver Advisory generator
 │           ├── workflow.py     # Nodes, conditional routers, and compiled graph
 │           └── runner.py       # FreightAgentRunner (execution, streaming, HITL resume)
-├── tests/                      # Automated test suite (89 test cases)
+├── tests/                      # Automated test suite (100 test cases)
 │   ├── __init__.py
 │   ├── test_models.py          # Domain model constraints & validation tests
 │   ├── test_tools.py           # NOAA client, Shapely GIS, and Route Solver tests
 │   ├── test_graph.py           # LangGraph nodes, routing edges, and HITL tests
+│   ├── test_manifest_parser.py # Unstructured parser, injection defenses & geocoding
+│   ├── test_advisory.py        # Incident brief node, zero math hallucination tests
 │   └── test_evals.py           # Benchmark dataset integrity & scoring harness tests
 └── evals/                      # Quantitative evaluation benchmark suite
     ├── __init__.py
@@ -271,7 +346,7 @@ freight-reroute-agent/
 
 ---
 
-## 5. Quickstart & Deployment
+## 6. Quickstart & Deployment
 
 ### Local Environment Setup (Virtualenv)
 
@@ -307,7 +382,7 @@ python run_agent.py --port USLAX --origin 33.7701 -118.1937 --dest 33.4484 -112.
 
 #### 3. Run Test Suite
 ```bash
-# Execute all 89 unit and integration tests
+# Execute all 100 unit and integration tests (100% mocked, zero network flakes)
 pytest -v
 ```
 
@@ -367,9 +442,37 @@ docker run --rm -it freight-reroute-agent:latest /bin/bash
 
 ---
 
-## 6. Programmatic Usage Examples
+## 7. Programmatic Usage Examples
 
-### Example 1: Standard End-to-End Execution
+### Example 1: Unstructured Carrier Email & Dispatch Note Ingestion
+
+```python
+from langchain_openai import ChatOpenAI
+from freight_agent.parser import UnstructuredManifestParser
+
+# Initialize unstructured parser with your LLM provider of choice
+parser = UnstructuredManifestParser(
+    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.0)
+)
+
+raw_email_note = """
+Subject: Load Confirmation BOL # SHP-88421
+Origin: Port of Los Angeles (USLAX)
+Destination: Chicago Intermodal Terminal
+Cargo: Cold Chain Vaccines (Max transit window: 48 hours)
+Demurrage rate: $3,200 per day.
+Deadline: Delivery required before 2026-10-25T18:00:00Z.
+"""
+
+# Parses, sanitizes injections, resolves port coordinates, and returns immutable model
+manifest = parser.parse(raw_email_note)
+print(f"Validated Shipment ID: {manifest.shipment_id}")
+print(f"Resolved Origin Port: {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude})")
+```
+
+---
+
+### Example 2: Standard End-to-End Execution with Incident Advisory
 
 ```python
 from datetime import UTC, datetime, timedelta
@@ -392,19 +495,28 @@ manifest = ShipmentManifest(
 runner = FreightAgentRunner()
 result = runner.run(manifest)
 
-# 3. Check results
+# 3. Check disruption and inspect synthesized incident brief
 if result["current_corridor_disrupted"]:
-    print(f"Disruption detected! Detour selected: {result['decision'].selected_route.route_id}")
-    print(f"Demurrage avoided: ${result['decision'].estimated_penalty_saved:,.2f}")
+    advisory = result["incident_advisory"]
+    print(f"--- DRIVER ADVISORY ---")
+    print(advisory.driver_advisory.driver_instructions)
+    print(f"Weather Hazards: {advisory.driver_advisory.weather_hazards}")
+    print(f"Rest Stops: {advisory.driver_advisory.recommended_rest_stops}")
+    
+    print(f"\n--- EXECUTIVE RATIONALE ---")
+    print(advisory.executive_rationale)
+    print(f"Detour Surcharge: ${advisory.additional_cost_usd:,.2f} USD")
+    print(f"Demurrage Avoided: ${advisory.estimated_penalty_saved:,.2f} USD")
 
 # 4. Access EDI 204 booking payload
 if result["edi_tender_payload"]:
+    print("\n--- EDI 204 TENDER ---")
     print(result["edi_tender_payload"].edi_raw)
 ```
 
 ---
 
-### Example 2: Real-Time Execution Event Streaming
+### Example 3: Real-Time Execution Event Streaming
 
 ```python
 from freight_agent.graph.runner import FreightAgentRunner
@@ -420,7 +532,7 @@ for node_name, state_update in runner.stream_run(manifest):
 
 ---
 
-### Example 3: Human-in-the-Loop Checkpoint Pause and Resume
+### Example 4: Human-in-the-Loop Checkpoint Pause and Resume
 
 ```python
 from freight_agent.graph.runner import FreightAgentRunner

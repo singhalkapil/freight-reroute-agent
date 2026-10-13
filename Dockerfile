@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src/ ./src/
 COPY evals/ ./evals/
 COPY tests/ ./tests/
+COPY run_agent.py ./
 
 # Default command runs the evaluation benchmark harness
 CMD ["python", "evals/evaluate.py"]

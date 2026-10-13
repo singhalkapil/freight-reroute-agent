@@ -293,20 +293,32 @@ pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-#### 2. Run Test Suite
+#### 2. Run the Agent Locally (Dynamic CLI & Interactive Mode)
+```bash
+# Run interactively with terminal prompts
+python run_agent.py --interactive
+
+# Or run using operational presets (clear, hurricane, cold-chain, high-cost)
+python run_agent.py --preset hurricane
+
+# Or pass custom shipment parameters directly
+python run_agent.py --port USLAX --origin 33.7701 -118.1937 --dest 33.4484 -112.0740 --cargo "Semiconductors" --demurrage 8000
+```
+
+#### 3. Run Test Suite
 ```bash
 # Execute all 89 unit and integration tests
 pytest -v
 ```
 
-#### 3. Run Linter & Formatter Validation
+#### 4. Run Linter & Formatter Validation
 ```bash
 # Verify zero lint errors and formatting compliance
 ruff check .
 ruff format --check .
 ```
 
-#### 4. Run Quantitative Evaluation Benchmark
+#### 5. Run Quantitative Evaluation Benchmark
 ```bash
 # Execute standalone 30-case evaluation suite
 python evals/evaluate.py
@@ -316,6 +328,9 @@ python evals/evaluate.py
 ```bash
 # Install dependencies using Poetry
 poetry install
+
+# Run agent locally
+poetry run python run_agent.py --preset hurricane
 
 # Run test suite
 poetry run pytest -v

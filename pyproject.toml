@@ -3,6 +3,7 @@ name = "freight-reroute-agent"
 version = "0.1.0"
 description = "Enterprise freight corridor disruption monitoring and intermodal rerouting agent"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7.0",
@@ -25,7 +26,8 @@ dev = [
 name = "freight-reroute-agent"
 version = "0.1.0"
 description = "Enterprise freight corridor disruption monitoring and intermodal rerouting agent"
-authors = ["Logistics Engineering Team <engineering@freight-agent.internal>"]
+authors = ["Kapil Singhal <singhal.kapil524@gmail.com>"]
+license = "MIT"
 readme = "README.md"
 packages = [{include = "freight_agent", from = "src"}]
 

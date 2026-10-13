@@ -6,6 +6,7 @@
 [![Architecture](https://img.shields.io/badge/orchestration-LangGraph%20HITL-blueviolet.svg)](src/freight_agent/graph/)
 [![GIS Geometry](https://img.shields.io/badge/spatial-Shapely%202.0%20%2B%20GEOS-success.svg)](src/freight_agent/tools/weather.py)
 [![Standards](https://img.shields.io/badge/edi-ANSI%20X12%20204-orange.svg)](src/freight_agent/graph/workflow.py)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **Executive Summary:** Autonomous agent system reducing intermodal freight demurrage by **$253k+ (83.2% net cost savings)** across 30 benchmark shipping corridors. Replaces error-prone LLM tool-calling loops with a deterministic, sub-20ms **LangGraph state machine**, Shapely GIS spatial computing, and an auditable **Human-in-the-Loop financial approval gate**.
 
@@ -434,5 +435,5 @@ if initial_state.get("requires_human_review"):
 ---
 
 ## License
-
-Enterprise Proprietary & Confidential. All rights reserved. Logistics Engineering Team.
+ 
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.

@@ -27,3 +27,4 @@ COPY tests/ ./tests/
 
 # Default command runs the evaluation benchmark harness
 CMD ["python", "evals/evaluate.py"]
+

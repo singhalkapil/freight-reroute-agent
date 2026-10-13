@@ -368,7 +368,24 @@ pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-#### 2. Run the Agent Locally (Dynamic CLI & Interactive Mode)
+#### 2. Google Gemini Setup & API Key (Optional for Offline Testing)
+
+> [!NOTE]
+> **100% Offline Testing Guarantee:** All unit tests (`pytest`), benchmarks (`evals/evaluate.py`), and graph state machines execute **100% mocked offline** with zero live network calls and require **zero API keys** to run.
+
+To enable live unstructured natural language manifest parsing and generative driver advisory creation using Google Gemini 1.5 Flash:
+1. Obtain a free API key from [Google AI Studio](https://aistudio.google.com/).
+2. Copy the tracked template `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Set your API key in `.env`:
+   ```bash
+   GEMINI_API_KEY=your_google_ai_studio_api_key_here
+   ```
+   *(Note: `GOOGLE_API_KEY` is also supported as an alias fallback.)*
+
+#### 3. Run the Agent Locally (Dynamic CLI & Interactive Mode)
 ```bash
 # Run interactively with terminal prompts
 python run_agent.py --interactive
@@ -380,20 +397,20 @@ python run_agent.py --preset hurricane
 python run_agent.py --port USLAX --origin 33.7701 -118.1937 --dest 33.4484 -112.0740 --cargo "Semiconductors" --demurrage 8000
 ```
 
-#### 3. Run Test Suite
+#### 4. Run Test Suite
 ```bash
-# Execute all 100 unit and integration tests (100% mocked, zero network flakes)
+# Execute all unit and integration tests (100% mocked, zero network flakes)
 pytest -v
 ```
 
-#### 4. Run Linter & Formatter Validation
+#### 5. Run Linter & Formatter Validation
 ```bash
 # Verify zero lint errors and formatting compliance
 ruff check .
 ruff format --check .
 ```
 
-#### 5. Run Quantitative Evaluation Benchmark
+#### 6. Run Quantitative Evaluation Benchmark
 ```bash
 # Execute standalone 30-case evaluation suite
 python evals/evaluate.py
@@ -447,13 +464,12 @@ docker run --rm -it freight-reroute-agent:latest /bin/bash
 ### Example 1: Unstructured Carrier Email & Dispatch Note Ingestion
 
 ```python
-from langchain_openai import ChatOpenAI
-from freight_agent.parser import UnstructuredManifestParser
+from langchain_google_genai import ChatGoogleGenerativeAI
+from freight_agent.parser import UnstructuredManifestParser, get_gemini_chat_model
 
-# Initialize unstructured parser with your LLM provider of choice
-parser = UnstructuredManifestParser(
-    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.0)
-)
+# Initialize unstructured parser using Google Gemini 1.5 Flash (free tier available at https://aistudio.google.com/)
+llm = get_gemini_chat_model(model="gemini-1.5-flash", temperature=0.0)
+parser = UnstructuredManifestParser(llm=llm)
 
 raw_email_note = """
 Subject: Load Confirmation BOL # SHP-88421
@@ -467,7 +483,9 @@ Deadline: Delivery required before 2026-10-25T18:00:00Z.
 # Parses, sanitizes injections, resolves port coordinates, and returns immutable model
 manifest = parser.parse(raw_email_note)
 print(f"Validated Shipment ID: {manifest.shipment_id}")
-print(f"Resolved Origin Port: {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude})")
+print(
+    f"Resolved Origin Port: {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude})"
+)
 ```
 
 ---

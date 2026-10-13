@@ -247,3 +247,55 @@ class LoadTenderPayload(BaseModel):
         ..., gt=0, description="Exact count of included EDI transaction segments"
     )
     generated_at: datetime = Field(..., description="Timestamp of tender generation in UTC")
+
+
+class DriverAdvisory(BaseModel):
+    """Driver-facing reroute instructions and real-time weather safety precautions."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    driver_instructions: str = Field(
+        ..., min_length=1, description="Clear, plain-language turn-by-turn or corridor instructions"
+    )
+    weather_hazards: str = Field(
+        ..., min_length=1, description="NOAA weather hazard warnings and safety precautions"
+    )
+    recommended_rest_stops: list[str] = Field(
+        default_factory=list,
+        description="Recommended staging areas, rest stops, or inspection hubs",
+    )
+
+
+class IncidentAdvisoryBrief(BaseModel):
+    """Audit-ready synthetic LLM executive incident brief and driver advisory.
+
+    Strictly grounded: demurrage fees, detour costs, transit hours, and SLA delays are
+    injected directly from deterministic upstream nodes to eliminate math hallucination.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    shipment_id: str = Field(..., min_length=1, description="Shipment identifier")
+    driver_advisory: DriverAdvisory = Field(
+        ..., description="Actionable driver instructions and NOAA weather alerts"
+    )
+    executive_rationale: str = Field(
+        ..., min_length=1, description="Executive narrative explaining reroute financial rationale"
+    )
+    # Deterministic injected figures (strictly grounded)
+    additional_cost_usd: float = Field(
+        ..., ge=0.0, description="Deterministic additional detour cost in USD"
+    )
+    estimated_penalty_saved: float = Field(
+        ..., ge=0.0, description="Deterministic demurrage penalty saved in USD"
+    )
+    estimated_transit_hours: float = Field(
+        ..., gt=0.0, description="Deterministic transit duration in hours"
+    )
+    requires_human_approval: bool = Field(
+        ..., description="Whether reroute requires human dispatcher authorization"
+    )
+    edi_tender_summary: str = Field(
+        ..., min_length=1, description="Structured EDI 204 tender summary"
+    )
+    generated_at: datetime = Field(..., description="Timestamp of brief generation in UTC")

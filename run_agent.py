@@ -72,7 +72,9 @@ def interactive_prompt() -> ShipmentManifest:
     orig_lon = float(input("Origin Longitude [-94.7977]: ").strip() or -94.7977)
     dest_lat = float(input("Destination Latitude [32.7767]: ").strip() or 32.7767)
     dest_lon = float(input("Destination Longitude [-96.7970]: ").strip() or -96.7970)
-    cargo = input("Cargo Classification [Precision Electronics]: ").strip() or "Precision Electronics"
+    cargo = (
+        input("Cargo Classification [Precision Electronics]: ").strip() or "Precision Electronics"
+    )
     perish_in = input("Cold Chain Perishability (hours, or leave blank): ").strip()
     perish = float(perish_in) if perish_in else None
     demurrage = float(input("Demurrage Rate ($/day) [5000.0]: ").strip() or 5000.0)
@@ -99,7 +101,10 @@ def main() -> None:
         "-i", "--interactive", action="store_true", help="Prompt interactively for shipment details"
     )
     parser.add_argument(
-        "-p", "--preset", choices=list(PRESETS.keys()), help="Run a pre-configured operational scenario"
+        "-p",
+        "--preset",
+        choices=list(PRESETS.keys()),
+        help="Run a pre-configured operational scenario",
     )
     parser.add_argument("-f", "--file", type=Path, help="Load shipment manifest from a JSON file")
     parser.add_argument("--shipment-id", default="SHP-CLI-01", help="Custom shipment ID")
@@ -186,7 +191,9 @@ def main() -> None:
         f" Route   : {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude}) "
         f"-> ({manifest.destination.latitude}, {manifest.destination.longitude})"
     )
-    print(f" Cargo   : {manifest.cargo_type} | Perishability: {manifest.perishability_hours or 'N/A'}h")
+    print(
+        f" Cargo   : {manifest.cargo_type} | Perishability: {manifest.perishability_hours or 'N/A'}h"
+    )
     print(
         f" Demurrage Rate : ${manifest.demurrage_rate_per_day:,.2f}/day | "
         f"SLA Deadline: {manifest.sla_delivery_deadline.strftime('%Y-%m-%d %H:%M UTC')}"

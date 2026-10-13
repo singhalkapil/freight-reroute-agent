@@ -4,6 +4,7 @@ import operator
 from typing import Annotated, TypedDict
 
 from freight_agent.models.domain import (
+    IncidentAdvisoryBrief,
     LoadTenderPayload,
     RerouteAlternative,
     RerouteDecision,
@@ -25,3 +26,4 @@ class FreightAgentState(TypedDict, total=False):
     edi_tender_payload: LoadTenderPayload | None
     current_corridor_disrupted: bool
     requires_human_review: bool
+    incident_advisory: IncidentAdvisoryBrief | None

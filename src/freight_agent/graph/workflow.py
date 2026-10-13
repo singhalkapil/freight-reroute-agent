@@ -13,6 +13,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
+from freight_agent.graph.advisory_node import make_generate_advisory_node
 from freight_agent.graph.state import FreightAgentState
 from freight_agent.models.domain import (
     LoadTenderPayload,
@@ -303,6 +304,11 @@ def route_after_detection(state: FreightAgentState) -> str:
 
 
 def route_after_alternatives(state: FreightAgentState) -> str:
+    """Conditional router: passes candidate reroute alternatives to advisory synthesis."""
+    return "generate_advisory"
+
+
+def route_after_advisory(state: FreightAgentState) -> str:
     """Conditional router: branches to human_review if cost or delay thresholds are breached."""
     if state.get("requires_human_review", False):
         return "human_review"
@@ -320,6 +326,7 @@ def create_freight_agent_graph(
     weather_client: NOAAWeatherClient | None = None,
     route_solver: IntermodalRouteSolver | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
+    advisory_llm: Any | None = None,
 ) -> StateGraph:
     """Construct the compiled LangGraph workflow state machine."""
     workflow = StateGraph(FreightAgentState)
@@ -328,6 +335,7 @@ def create_freight_agent_graph(
     workflow.add_node("inspect_manifest", inspect_manifest_node)
     workflow.add_node("detect_bottlenecks", make_detect_bottlenecks_node(weather_client))
     workflow.add_node("calculate_alternatives", make_calculate_alternatives_node(route_solver))
+    workflow.add_node("generate_advisory", make_generate_advisory_node(advisory_llm))
     workflow.add_node("human_review", human_review_node)
     workflow.add_node("dispatch_tender", dispatch_tender_node)
 
@@ -344,9 +352,11 @@ def create_freight_agent_graph(
         },
     )
 
+    workflow.add_edge("calculate_alternatives", "generate_advisory")
+
     workflow.add_conditional_edges(
-        "calculate_alternatives",
-        route_after_alternatives,
+        "generate_advisory",
+        route_after_advisory,
         {
             "human_review": "human_review",
             "dispatch_tender": "dispatch_tender",

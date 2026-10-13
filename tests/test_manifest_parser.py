@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from freight_agent.models.domain import ShipmentManifest, ShipmentStatus
 from freight_agent.parser.manifest_parser import (
@@ -162,3 +163,49 @@ def test_manifest_parser_empty_text_raises():
     with pytest.raises(ManifestParserError) as exc:
         parser.parse("   ")
     assert "Manifest input text is empty" in str(exc.value)
+
+
+def test_extracted_manifest_is_strictly_immutable(mock_llm_factory):
+    """Verify ShipmentManifest and RawExtractedManifest are strictly immutable (frozen)."""
+    mock_extracted = RawExtractedManifest(
+        shipment_id="SHP-FROZEN-01",
+        origin_port_code="USLAX",
+        origin_latitude=33.7432,
+        origin_longitude=-118.2673,
+        destination_latitude=41.8781,
+        destination_longitude=-87.6298,
+        destination_name_or_code="Chicago",
+        cargo_type="Dry Freight",
+        perishability_hours=None,
+        demurrage_rate_per_day=1200.0,
+        sla_delivery_deadline="2026-11-01T00:00:00Z",
+        current_status="IN_TRANSIT",
+    )
+
+    with pytest.raises(ValidationError):
+        # Attempt mutation on frozen RawExtractedManifest
+        mock_extracted.cargo_type = "Mutated Cargo"  # type: ignore
+
+    mock_llm = mock_llm_factory(mock_extracted)
+    parser = UnstructuredManifestParser(llm=mock_llm)
+    manifest = parser.parse("Valid shipment text")
+
+    with pytest.raises(ValidationError):
+        # Attempt mutation on frozen ShipmentManifest
+        manifest.shipment_id = "MUTATED-ID"  # type: ignore
+
+
+def test_manifest_parser_llm_runtime_failure():
+    """Verify parser raises ManifestParserError when underlying LLM invocation fails."""
+    from langchain_core.runnables import RunnableLambda
+
+    def _raise_timeout(_):
+        raise TimeoutError("LLM API gateway timeout")
+
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value = RunnableLambda(_raise_timeout)
+    parser = UnstructuredManifestParser(llm=mock_llm)
+
+    with pytest.raises(ManifestParserError) as exc_info:
+        parser.parse("Some manifest text")
+    assert "LLM extraction error" in str(exc_info.value)

@@ -12,7 +12,7 @@ from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from freight_agent.models.domain import Coordinates, PortLocation, ShipmentManifest, ShipmentStatus
 
@@ -64,6 +64,8 @@ class PromptInjectionDetectedError(ManifestParserError):
 
 class RawExtractedManifest(BaseModel):
     """Intermediate extraction schema matching natural language LLM parsing before coordinate resolution."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     shipment_id: str = Field(description="Unique shipment ID, BOL number, or tracking number")
     origin_port_code: str = Field(

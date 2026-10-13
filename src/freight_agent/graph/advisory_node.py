@@ -12,7 +12,7 @@ from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from freight_agent.graph.state import FreightAgentState
 from freight_agent.models.domain import DriverAdvisory, IncidentAdvisoryBrief
@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 class SyntheticLLMAdvisoryContent(BaseModel):
     """LLM generated narrative content (strictly qualitative; numbers are injected externally)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     driver_instructions: str = Field(
         description="Clear, actionable instructions for the freight driver describing route and corridor cautions."

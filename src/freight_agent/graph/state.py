@@ -17,7 +17,9 @@ class FreightAgentState(TypedDict, total=False):
     """Execution state tracked across LangGraph nodes for a shipment evaluation."""
 
     thread_id: str
-    shipment: ShipmentManifest
+    raw_manifest_text: str | None
+    user_prompt: str | None
+    shipment: ShipmentManifest | None
     active_alerts: list[WeatherDisruptionAlert]
     candidate_routes: list[RerouteAlternative]
     decision: RerouteDecision | None
@@ -26,4 +28,4 @@ class FreightAgentState(TypedDict, total=False):
     edi_tender_payload: LoadTenderPayload | None
     current_corridor_disrupted: bool
     requires_human_review: bool
-    incident_advisory: IncidentAdvisoryBrief | None
+    incident_advisory: IncidentAdvisoryBrief | dict | None

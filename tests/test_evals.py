@@ -122,3 +122,21 @@ class TestBenchmarkHarness:
         assert summary.detection_f1_pct == 100.0
         assert summary.approval_compliance_pct == 100.0
         assert summary.latency_mean_ms > 0
+
+    def test_unclamped_net_savings_calculation(self, benchmark_scenarios: list[dict]):
+        """Verify that detour cost exceeding avoided demurrage correctly yields negative net savings."""
+        solver = IntermodalRouteSolver(enable_online_lookup=False)
+        # Take an existing disrupted scenario and set demurrage below detour cost
+        sd_sc = next(s for s in benchmark_scenarios if s["scenario_id"] == "SD-01").copy()
+        sd_sc["shipment"] = sd_sc["shipment"].copy()
+        sd_sc["shipment"]["demurrage_rate_per_day"] = 100.0
+
+        rec = run_scenario(sd_sc, solver)
+        assert rec.detected_disruption is True
+        assert rec.blind_demurrage_usd == 200.0
+        assert rec.additional_cost_usd > 200.0
+        # Net saved must be negative (unclamped)
+        expected_deficit = round(200.0 - rec.additional_cost_usd, 2)
+        assert rec.net_cost_saved_usd == expected_deficit
+        assert rec.net_cost_saved_usd < 0.0
+        assert rec.cost_optimality_pct < 0.0

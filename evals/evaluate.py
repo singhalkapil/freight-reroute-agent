@@ -17,15 +17,20 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from freight_agent.graph.runner import FreightAgentRunner
-from freight_agent.models.domain import (
+# Ensure src/ is on sys.path for direct script execution without PYTHONPATH=src
+_SRC_DIR = Path(__file__).resolve().parent.parent / "src"
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+from freight_agent.graph.runner import FreightAgentRunner  # noqa: E402
+from freight_agent.models.domain import (  # noqa: E402
     Coordinates,
     PortLocation,
     ShipmentManifest,
     ShipmentStatus,
 )
-from freight_agent.tools.routing import IntermodalRouteSolver
-from freight_agent.tools.weather import NOAAWeatherClient
+from freight_agent.tools.routing import IntermodalRouteSolver  # noqa: E402
+from freight_agent.tools.weather import NOAAWeatherClient  # noqa: E402
 
 logger = logging.getLogger("evals.evaluate")
 
@@ -174,9 +179,7 @@ def run_scenario(
         blind_demurrage = (
             round(manifest.demurrage_rate_per_day * 2.0, 2) if detected_disruption else 0.0
         )
-        net_saved = (
-            round(max(0.0, blind_demurrage - additional_cost), 2) if detected_disruption else 0.0
-        )
+        net_saved = round(blind_demurrage - additional_cost, 2) if detected_disruption else 0.0
         optimality_pct = (
             round((net_saved / blind_demurrage) * 100.0, 2)
             if (detected_disruption and blind_demurrage > 0)

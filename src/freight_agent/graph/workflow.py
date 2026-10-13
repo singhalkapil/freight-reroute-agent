@@ -19,9 +19,9 @@ from freight_agent.models.domain import (
     LoadTenderPayload,
     RerouteAlternative,
     RerouteDecision,
-    ShipmentManifest,
     TransportMode,
 )
+from freight_agent.parser.manifest_parser import UnstructuredManifestParser
 from freight_agent.tools.routing import IntermodalRouteSolver
 from freight_agent.tools.weather import NOAAWeatherClient
 
@@ -32,31 +32,55 @@ COST_APPROVAL_THRESHOLD_USD: float = 5000.0
 SLA_BREACH_APPROVAL_THRESHOLD_HOURS: float = 24.0
 
 
-def inspect_manifest_node(state: FreightAgentState) -> dict[str, Any]:
-    """Node 1: Inspects cargo perishability and remaining contractual SLA delivery buffer."""
-    shipment: ShipmentManifest = state["shipment"]
-    now = datetime.now(UTC)
+def make_inspect_manifest_node(manifest_llm: Any | None = None):
+    """Create Node 1: Dynamic manifest inspection and unstructured ingestion."""
+    parser = UnstructuredManifestParser(llm=manifest_llm)
 
-    # Compute remaining time to SLA delivery deadline
-    sla_buffer_seconds = (shipment.sla_delivery_deadline - now).total_seconds()
-    sla_buffer_hours = max(0.0, round(sla_buffer_seconds / 3600.0, 2))
+    def inspect_manifest_node(state: FreightAgentState) -> dict[str, Any]:
+        """Node 1: Inspects cargo perishability and remaining contractual SLA delivery buffer.
 
-    findings = [
-        f"INSPECT_MANIFEST: Validated shipment {shipment.shipment_id} "
-        f"[Commodity='{shipment.cargo_type}', SLA Buffer={sla_buffer_hours}h, "
-        f"Perishability={shipment.perishability_hours or 'N/A'}h, "
-        f"DemurrageRate=${shipment.demurrage_rate_per_day:,.2f}/day]"
-    ]
+        If a pre-parsed 'shipment' is absent from state, dynamically ingests and parses
+        'raw_manifest_text' or 'user_prompt' via UnstructuredManifestParser.
+        """
+        shipment = state.get("shipment")
+        updates: dict[str, Any] = {}
 
-    if shipment.perishability_hours and sla_buffer_hours < shipment.perishability_hours:
-        findings.append(
-            f"INSPECT_MANIFEST: WARNING - Perishability shelf life ({shipment.perishability_hours}h) "
-            f"exceeds remaining SLA buffer ({sla_buffer_hours}h)."
-        )
+        if shipment is None:
+            raw_text = state.get("raw_manifest_text") or state.get("user_prompt")
+            if not raw_text or not raw_text.strip():
+                raise ValueError(
+                    "State missing 'shipment', 'raw_manifest_text', or 'user_prompt'. "
+                    "Cannot initialize freight evaluation."
+                )
+            shipment = parser.parse(raw_text)
+            updates["shipment"] = shipment
 
-    return {
-        "audit_log": findings,
-    }
+        now = datetime.now(UTC)
+
+        # Compute remaining time to SLA delivery deadline
+        sla_buffer_seconds = (shipment.sla_delivery_deadline - now).total_seconds()
+        sla_buffer_hours = max(0.0, round(sla_buffer_seconds / 3600.0, 2))
+
+        findings = [
+            f"INSPECT_MANIFEST: Validated shipment {shipment.shipment_id} "
+            f"[Commodity='{shipment.cargo_type}', SLA Buffer={sla_buffer_hours}h, "
+            f"Perishability={shipment.perishability_hours or 'N/A'}h, "
+            f"DemurrageRate=${shipment.demurrage_rate_per_day:,.2f}/day]"
+        ]
+
+        if shipment.perishability_hours and sla_buffer_hours < shipment.perishability_hours:
+            findings.append(
+                f"INSPECT_MANIFEST: WARNING - Perishability shelf life ({shipment.perishability_hours}h) "
+                f"exceeds remaining SLA buffer ({sla_buffer_hours}h)."
+            )
+
+        updates["audit_log"] = findings
+        return updates
+
+    return inspect_manifest_node
+
+
+inspect_manifest_node = make_inspect_manifest_node()
 
 
 def make_detect_bottlenecks_node(weather_client: NOAAWeatherClient | None = None):
@@ -327,12 +351,13 @@ def create_freight_agent_graph(
     route_solver: IntermodalRouteSolver | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
     advisory_llm: Any | None = None,
+    manifest_llm: Any | None = None,
 ) -> StateGraph:
     """Construct the compiled LangGraph workflow state machine."""
     workflow = StateGraph(FreightAgentState)
 
     # 1. Add Workflow Nodes
-    workflow.add_node("inspect_manifest", inspect_manifest_node)
+    workflow.add_node("inspect_manifest", make_inspect_manifest_node(manifest_llm))
     workflow.add_node("detect_bottlenecks", make_detect_bottlenecks_node(weather_client))
     workflow.add_node("calculate_alternatives", make_calculate_alternatives_node(route_solver))
     workflow.add_node("generate_advisory", make_generate_advisory_node(advisory_llm))
@@ -377,3 +402,7 @@ def create_freight_agent_graph(
     # 3. Compile with Checkpointer (default MemorySaver for interrupt/resume recovery)
     active_checkpointer = checkpointer if checkpointer is not None else MemorySaver()
     return workflow.compile(checkpointer=active_checkpointer)
+
+
+# Factory alias for agent-nexus workbench integration
+create_freight_graph = create_freight_agent_graph

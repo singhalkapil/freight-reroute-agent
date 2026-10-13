@@ -7,7 +7,7 @@ fallbacks for missing coordinates, and schema validation into immutable Shipment
 
 import logging
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -158,14 +158,15 @@ class UnstructuredManifestParser:
 
     def __init__(
         self,
-        llm: BaseChatModel | Any,
+        llm: BaseChatModel | Any | None = None,
         geocoding_lookup: dict[str, tuple[float, float]] | None = None,
         strict_guardrails: bool = False,
     ) -> None:
         """Initialize the manifest parser.
 
         Args:
-            llm: LangChain chat model instance supporting .with_structured_output().
+            llm: Optional LangChain chat model instance supporting .with_structured_output().
+                 If None, the parser operates in deterministic regex/geocoding mode.
             geocoding_lookup: Custom or standard mapping of port codes to (lat, lon) coordinates.
             strict_guardrails: If True, raises PromptInjectionDetectedError on suspicious input.
         """
@@ -175,14 +176,16 @@ class UnstructuredManifestParser:
         )
         self.strict_guardrails = strict_guardrails
 
-        # Configure structured output chain
+        # Configure structured output chain if LLM is provided
         self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", SYSTEM_EXTRACTION_PROMPT),
                 ("human", "Raw manifest document text:\n\n{document_text}"),
             ]
         )
-        self.structured_llm = self.llm.with_structured_output(RawExtractedManifest)
+        self.structured_llm = (
+            self.llm.with_structured_output(RawExtractedManifest) if self.llm is not None else None
+        )
 
     def _resolve_coordinates(
         self,
@@ -241,6 +244,81 @@ class UnstructuredManifestParser:
             dt = dt.replace(tzinfo=UTC)
         return dt
 
+    def _extract_deterministic(self, text: str) -> RawExtractedManifest:
+        """Extract structured manifest fields deterministically via regex when LLM is None."""
+        id_match = (
+            re.search(r"(?:BOL|Shipment|Tracking|ID|Load)[:\s#\-]*([A-Za-z0-9\-]+)", text, re.I)
+            or re.search(r"\b([A-Z]{3,4}-\d{4,}[A-Za-z0-9\-]*)\b", text)
+            or re.search(r"\b(SHP-[A-Za-z0-9\-]+)\b", text, re.I)
+        )
+        shipment_id = id_match.group(1).strip() if id_match else "SHP-DETERMINISTIC-001"
+
+        origin_match = re.search(r"\b(US[A-Z]{3})\b", text)
+        origin_code = origin_match.group(1).upper() if origin_match else "USLAX"
+
+        dest_match = re.search(
+            r"(?:to|destined for|destination[:\s]+)\s*([A-Za-z0-9\s]+?)(?:\.|\n|,|$)", text, re.I
+        )
+        dest_str = "USCHI"
+        if dest_match:
+            candidate = dest_match.group(1).strip()
+            for known in self.geocoding_lookup.keys():
+                if known in candidate.upper() or candidate.upper() in known:
+                    dest_str = known
+                    break
+            else:
+                dest_str = candidate.split()[0] if candidate else "USCHI"
+
+        cargo_match = re.search(r"(?:Cargo|Commodity|Load)[:\s]+([^\n\.,]+)", text, re.I)
+        cargo_type = cargo_match.group(1).strip() if cargo_match else "General Freight"
+
+        perish_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:h|hr|hour|hours)\b", text, re.I)
+        perishability_hours = float(perish_match.group(1)) if perish_match else None
+
+        demurrage_match = (
+            re.search(r"(?:demurrage(?: rate)?[:\s]*\$?)\s*([0-9,]+(?:\.[0-9]+)?)", text, re.I)
+            or re.search(r"\$\s*([0-9,]+(?:\.[0-9]+)?)\s*(?:/day|per day)", text, re.I)
+            or re.search(r"([0-9,]+(?:\.[0-9]+)?)\s*(?:/day|per day)", text, re.I)
+        )
+        demurrage_rate = 1200.0
+        if demurrage_match:
+            try:
+                demurrage_rate = float(demurrage_match.group(1).replace(",", ""))
+            except ValueError:
+                demurrage_rate = 1200.0
+
+        deadline_match = re.search(
+            r"\b(\d{4}-\d{2}-\d{2}(?:[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?)\b",
+            text,
+        )
+        if deadline_match:
+            deadline_str = deadline_match.group(1).replace(" ", "T")
+            if "T" not in deadline_str:
+                deadline_str += "T00:00:00Z"
+            elif (
+                not deadline_str.endswith("Z")
+                and "+" not in deadline_str
+                and "-" not in deadline_str[10:]
+            ):
+                deadline_str += "Z"
+        else:
+            deadline_str = (datetime.now(UTC) + timedelta(days=3)).strftime("%Y-%m-%dT12:00:00Z")
+
+        return RawExtractedManifest(
+            shipment_id=shipment_id,
+            origin_port_code=origin_code,
+            origin_latitude=None,
+            origin_longitude=None,
+            destination_latitude=None,
+            destination_longitude=None,
+            destination_name_or_code=dest_str,
+            cargo_type=cargo_type,
+            perishability_hours=perishability_hours,
+            demurrage_rate_per_day=demurrage_rate,
+            sla_delivery_deadline=deadline_str,
+            current_status="IN_TRANSIT",
+        )
+
     def parse(self, raw_text: str) -> ShipmentManifest:
         """Parse raw manifest text into a validated, immutable ShipmentManifest.
 
@@ -260,17 +338,21 @@ class UnstructuredManifestParser:
         # Step 1: Security sanitization
         sanitized_text = sanitize_manifest_input(raw_text, strict=self.strict_guardrails)
 
-        # Step 2: Invoke structured LLM extraction
-        try:
-            chain = self.prompt | self.structured_llm
-            extracted: RawExtractedManifest = chain.invoke({"document_text": sanitized_text})
-        except ValidationError as val_err:
-            raise ManifestParserError(
-                f"LLM structured output schema validation failed: {val_err}"
-            ) from val_err
-        except Exception as err:
-            logger.error("Structured LLM extraction invocation failed: %s", err)
-            raise ManifestParserError(f"LLM extraction error: {err}") from err
+        # Step 2: Extract intermediate structured representation
+        extracted: RawExtractedManifest
+        if self.structured_llm is not None:
+            try:
+                chain = self.prompt | self.structured_llm
+                extracted = chain.invoke({"document_text": sanitized_text})
+            except ValidationError as val_err:
+                raise ManifestParserError(
+                    f"LLM structured output schema validation failed: {val_err}"
+                ) from val_err
+            except Exception as err:
+                logger.error("Structured LLM extraction invocation failed: %s", err)
+                raise ManifestParserError(f"LLM extraction error: {err}") from err
+        else:
+            extracted = self._extract_deterministic(sanitized_text)
 
         # Step 3: Resolve origin port and coordinates (with fallback)
         origin_code = extracted.origin_port_code.strip().upper()

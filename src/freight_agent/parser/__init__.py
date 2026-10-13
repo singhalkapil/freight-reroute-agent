@@ -1,5 +1,6 @@
 """Unstructured shipment manifest ingestion and parser module."""
 
+from freight_agent.parser.gemini import get_gemini_chat_model
 from freight_agent.parser.manifest_parser import (
     KNOWN_PORT_COORDINATES,
     ManifestParserError,
@@ -13,5 +14,6 @@ __all__ = [
     "ManifestParserError",
     "PromptInjectionDetectedError",
     "UnstructuredManifestParser",
+    "get_gemini_chat_model",
     "sanitize_manifest_input",
 ]

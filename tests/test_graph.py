@@ -6,12 +6,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from freight_agent.graph.runner import FreightAgentRunner
-from freight_agent.graph.workflow import (
-    COST_APPROVAL_THRESHOLD_USD,
-)
+from freight_agent.graph.workflow import COST_APPROVAL_THRESHOLD_USD
 from freight_agent.models.domain import (
     AlertSeverity,
     Coordinates,
+    LoadTenderPayload,
     PortLocation,
     RerouteAlternative,
     ShipmentManifest,
@@ -65,9 +64,13 @@ class TestFreightAgentWorkflow:
         assert final_state["current_corridor_disrupted"] is False
         assert final_state["candidate_routes"] == []
         assert final_state["decision"] is None
-        assert final_state["edi_tender_payload"] is not None
-        assert "ST*204*0001~" in final_state["edi_tender_payload"]
-        assert "PRIMARY-SCHEDULE" in final_state["edi_tender_payload"]
+
+        tender = final_state["edi_tender_payload"]
+        assert isinstance(tender, LoadTenderPayload)
+        assert tender.shipment_id == "SHP-TEST-100"
+        assert tender.route_id == "PRIMARY-SCHEDULE"
+        assert "ST*204*0001~" in tender.edi_raw
+        assert f"SE*{tender.segment_count}*0001~" in tender.edi_raw
 
         # Audit log verifies node execution sequence
         audit = final_state["audit_log"]
@@ -75,6 +78,34 @@ class TestFreightAgentWorkflow:
         assert any("DETECT_BOTTLENECKS" in log for log in audit)
         assert any("DISPATCH_TENDER" in log for log in audit)
         assert not any("CALCULATE_ALTERNATIVES" in log for log in audit)
+
+    def test_dynamic_edi_segment_count_accuracy(self, base_manifest):
+        """Verify dynamic calculation of SE segment count precisely matches transaction lines."""
+        mock_weather = MagicMock(spec=NOAAWeatherClient)
+        mock_weather.check_corridor_disruptions.return_value = []
+
+        runner = FreightAgentRunner(weather_client=mock_weather)
+        final_state = runner.run(base_manifest, thread_id="thread-edi-count")
+
+        tender: LoadTenderPayload = final_state["edi_tender_payload"]
+        lines = tender.edi_raw.splitlines()
+
+        # Count segments belonging strictly to transaction set (ST through SE inclusive)
+        tx_segments = [line for line in lines if not line.startswith(("ISA", "GS", "GE", "IEA"))]
+        assert tender.segment_count == len(tx_segments)
+        assert f"SE*{len(tx_segments)}*0001~" in tender.edi_raw
+
+    def test_runner_retains_generated_thread_id(self, base_manifest):
+        """Ensure thread_id is stored in state even when caller omits explicit thread_id."""
+        mock_weather = MagicMock(spec=NOAAWeatherClient)
+        mock_weather.check_corridor_disruptions.return_value = []
+
+        runner = FreightAgentRunner(weather_client=mock_weather)
+        state = runner.run(base_manifest)
+
+        assert "thread_id" in state
+        assert isinstance(state["thread_id"], str)
+        assert len(state["thread_id"]) > 0
 
     def test_disrupted_corridor_under_threshold_auto_approves(self, base_manifest, severe_weather_alert):
         """Detour with surcharge < $5,000 and within SLA buffer auto-approves without manual interruption."""
@@ -102,8 +133,10 @@ class TestFreightAgentWorkflow:
         assert final_state["decision"] is not None
         assert final_state["decision"].requires_human_approval is False
         assert final_state["decision"].selected_route.route_id == "ALT-ROAD-CHEAP"
-        assert final_state["edi_tender_payload"] is not None
-        assert "ALT-ROAD-CHEAP" in final_state["edi_tender_payload"]
+
+        tender: LoadTenderPayload = final_state["edi_tender_payload"]
+        assert isinstance(tender, LoadTenderPayload)
+        assert "ALT-ROAD-CHEAP" in tender.edi_raw
 
         audit = final_state["audit_log"]
         assert any("CALCULATE_ALTERNATIVES" in log for log in audit)
@@ -151,12 +184,56 @@ class TestFreightAgentWorkflow:
         )
 
         assert resumed_state["human_approved"] is True
-        assert resumed_state["edi_tender_payload"] is not None
-        assert "ALT-RAIL-EXPENSIVE" in resumed_state["edi_tender_payload"]
+        tender = resumed_state["edi_tender_payload"]
+        assert isinstance(tender, LoadTenderPayload)
+        assert "ALT-RAIL-EXPENSIVE" in tender.edi_raw
 
         audit = resumed_state["audit_log"]
         assert any("HUMAN_REVIEW: Dispatcher APPROVED" in log for log in audit)
         assert any("DISPATCH_TENDER: Successfully generated EDI 204" in log for log in audit)
+
+    def test_disrupted_corridor_over_sla_delay_threshold_triggers_interrupt(
+        self, base_manifest, severe_weather_alert
+    ):
+        """Detour with low surcharge (< $5,000) but causing > 24h SLA delivery breach triggers human review."""
+        mock_weather = MagicMock(spec=NOAAWeatherClient)
+        mock_weather.check_corridor_disruptions.return_value = [severe_weather_alert]
+
+        # Low cost ($1,400 < $5,000) but slow rail alternative (42h transit)
+        slow_alt = RerouteAlternative(
+            route_id="ALT-SLOW-RAIL",
+            mode=TransportMode.RAIL,
+            distance_km=550.0,
+            estimated_transit_hours=42.0,
+            additional_cost_usd=1400.0,
+            risk_mitigated="Bypasses hurricane zone",
+        )
+        mock_routing = MagicMock(spec=IntermodalRouteSolver)
+        mock_routing.evaluate_all_modes.return_value = [slow_alt]
+
+        # Deadline only 8 hours from now -> delay will be 42h - 8h = 34h (> 24.0h SLA threshold)
+        tight_manifest = base_manifest.model_copy(
+            update={
+                "sla_delivery_deadline": datetime.now(UTC) + timedelta(hours=8.0),
+                "perishability_hours": 72.0,
+            }
+        )
+
+        runner = FreightAgentRunner(weather_client=mock_weather, route_solver=mock_routing)
+        thread_id = "thread-sla-breach-test"
+
+        state_at_interrupt = runner.run(tight_manifest, thread_id=thread_id)
+
+        # Verified human approval is triggered solely by SLA breach (> 24h)
+        assert state_at_interrupt["requires_human_review"] is True
+        assert state_at_interrupt["decision"].requires_human_approval is True
+        assert state_at_interrupt["decision"].selected_route.additional_cost_usd < COST_APPROVAL_THRESHOLD_USD
+        assert "exceeds 24.0h threshold" in state_at_interrupt["decision"].rationale
+
+        # Resume and complete
+        resumed = runner.resume_human_review(thread_id=thread_id, approved=True)
+        assert resumed["human_approved"] is True
+        assert isinstance(resumed["edi_tender_payload"], LoadTenderPayload)
 
     def test_human_review_rejection_aborts_tender(self, base_manifest, severe_weather_alert):
         """When human dispatcher rejects the detour, tender dispatch is aborted."""

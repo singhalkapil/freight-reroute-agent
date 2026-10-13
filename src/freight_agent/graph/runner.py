@@ -43,6 +43,7 @@ class FreightAgentRunner:
         tid = thread_id or str(uuid.uuid4())
         config = {"configurable": {"thread_id": tid}}
         initial_state: FreightAgentState = {
+            "thread_id": tid,
             "shipment": manifest,
             "active_alerts": [],
             "candidate_routes": [],
@@ -55,6 +56,8 @@ class FreightAgentRunner:
         }
 
         result = self.graph.invoke(initial_state, config=config)
+        if "thread_id" not in result:
+            result["thread_id"] = tid
         return result
 
     def stream_run(
@@ -66,6 +69,7 @@ class FreightAgentRunner:
         tid = thread_id or str(uuid.uuid4())
         config = {"configurable": {"thread_id": tid}}
         initial_state: FreightAgentState = {
+            "thread_id": tid,
             "shipment": manifest,
             "active_alerts": [],
             "candidate_routes": [],

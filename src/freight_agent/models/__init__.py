@@ -3,6 +3,7 @@
 from freight_agent.models.domain import (
     AlertSeverity,
     Coordinates,
+    LoadTenderPayload,
     PortLocation,
     RerouteAlternative,
     RerouteDecision,
@@ -16,6 +17,7 @@ from freight_agent.models.domain import (
 __all__ = [
     "AlertSeverity",
     "Coordinates",
+    "LoadTenderPayload",
     "PortLocation",
     "RerouteAlternative",
     "RerouteDecision",

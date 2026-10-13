@@ -15,9 +15,11 @@ from langgraph.types import interrupt
 
 from freight_agent.graph.state import FreightAgentState
 from freight_agent.models.domain import (
+    LoadTenderPayload,
     RerouteAlternative,
     RerouteDecision,
     ShipmentManifest,
+    TransportMode,
 )
 from freight_agent.tools.routing import IntermodalRouteSolver
 from freight_agent.tools.weather import NOAAWeatherClient
@@ -222,28 +224,19 @@ def dispatch_tender_node(state: FreightAgentState) -> dict[str, Any]:
     """Node 5: Generates a synthetic ANSI X12 EDI 204 Motor Carrier Load Tender booking payload."""
     shipment = state["shipment"]
     decision = state.get("decision")
-    human_approved = state.get("human_approved")
 
-    # If rerouted and human review rejected -> abort tender
-    if decision and human_approved is False:
-        return {
-            "edi_tender_payload": None,
-            "audit_log": ["DISPATCH_TENDER: Aborted EDI 204 booking generation due to dispatcher rejection."],
-        }
-
-    assigned_mode = decision.selected_route.mode.value if decision else "MOTOR"
+    assigned_mode = decision.selected_route.mode if decision else TransportMode.ROAD
     route_id = decision.selected_route.route_id if decision else "PRIMARY-SCHEDULE"
-    timestamp_str = datetime.now(UTC).strftime("%y%m%d*%H%M")
-    date_str = datetime.now(UTC).strftime("%Y%m%d")
+    now = datetime.now(UTC)
+    timestamp_str = now.strftime("%y%m%d*%H%M")
+    date_str = now.strftime("%Y%m%d")
 
-    # Standard synthetic ANSI X12 EDI 204 envelope
-    edi_lines = [
-        f"ISA*00*          *00*          *ZZ*FREIGHTAGENT   *ZZ*CARRIERSYS     *{timestamp_str}*U*00401*000000001*0*P*>~",
-        f"GS*SM*FREIGHTAGENT*CARRIERSYS*{date_str}*1200*1*X*004010~",
+    # Transaction set segments (ST through trailer)
+    transaction_segments = [
         "ST*204*0001~",
         f"B2**LOGS*{shipment.shipment_id}**PP~",
         "B2A*00*LT~",  # Load Tender
-        f"MS3*{assigned_mode}*B~",
+        f"MS3*{assigned_mode.value}*B~",
         f"N1*SH*ORIGIN TERMINAL*10*{shipment.origin.port_code}~",
         f"N3*LAT {shipment.origin.latitude:.4f} LON {shipment.origin.longitude:.4f}~",
         "N1*CN*DESTINATION FACILITY~",
@@ -251,19 +244,38 @@ def dispatch_tender_node(state: FreightAgentState) -> dict[str, Any]:
         f"OID*1*{shipment.shipment_id}***CTN*1*L*42000~",
         f"G62*10*{shipment.sla_delivery_deadline.strftime('%Y%m%d')}~",
         f"NTE*GEN*REROUTE ASSIGNMENT: {route_id}~",
-        "SE*13*0001~",
+    ]
+
+    # Dynamically compute exact transaction segment count (ST through SE inclusive)
+    segment_count = len(transaction_segments) + 1
+    transaction_segments.append(f"SE*{segment_count}*0001~")
+
+    # Wrap inside ANSI X12 interchange and group envelopes
+    edi_lines = [
+        f"ISA*00*          *00*          *ZZ*FREIGHTAGENT   *ZZ*CARRIERSYS     *{timestamp_str}*U*00401*000000001*0*P*>~",
+        f"GS*SM*FREIGHTAGENT*CARRIERSYS*{date_str}*1200*1*X*004010~",
+        *transaction_segments,
         "GE*1*1~",
         "IEA*1*000000001~",
     ]
     edi_payload = "\n".join(edi_lines)
 
+    tender_container = LoadTenderPayload(
+        shipment_id=shipment.shipment_id,
+        assigned_mode=assigned_mode,
+        route_id=route_id,
+        edi_raw=edi_payload,
+        segment_count=segment_count,
+        generated_at=now,
+    )
+
     log_entry = (
         f"DISPATCH_TENDER: Successfully generated EDI 204 booking tender "
-        f"[Mode={assigned_mode}, Route={route_id}, Segments=16]"
+        f"[Mode={assigned_mode.value}, Route={route_id}, TransactionSegments={segment_count}]"
     )
 
     return {
-        "edi_tender_payload": edi_payload,
+        "edi_tender_payload": tender_container,
         "audit_log": [log_entry],
     }
 

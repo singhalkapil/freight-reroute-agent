@@ -211,3 +211,17 @@ class ShipmentTrackingState(BaseModel):
     accumulated_delay_hours: float = Field(default=0.0, ge=0.0)
     active_reroute: RerouteAlternative | None = None
 
+
+class LoadTenderPayload(BaseModel):
+    """Standardized electronic booking tender container wrapping EDI 204 output."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    shipment_id: str = Field(..., min_length=1, description="Shipment identifier")
+    assigned_mode: TransportMode = Field(..., description="Assigned freight transit mode")
+    route_id: str = Field(..., min_length=1, description="Assigned primary or detour route ID")
+    edi_raw: str = Field(..., min_length=1, description="Raw ANSI X12 EDI 204 string")
+    segment_count: int = Field(..., gt=0, description="Exact count of included EDI transaction segments")
+    generated_at: datetime = Field(..., description="Timestamp of tender generation in UTC")
+
+

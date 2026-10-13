@@ -1,0 +1,1790 @@
+[
+  {
+    "scenario_id": "CW-01",
+    "category": "CLEAR_WEATHER",
+    "description": "Galveston to Dallas standard transit; fair skies across Texas corridor",
+    "shipment": {
+      "shipment_id": "SHP-CW-01",
+      "origin": {
+        "port_code": "USGAL",
+        "latitude": 29.3013,
+        "longitude": -94.7977
+      },
+      "destination": {
+        "latitude": 32.7767,
+        "longitude": -96.797
+      },
+      "cargo_type": "Standard Dry Freight",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3500.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Corridor is clear of weather hazards; primary tender dispatched"
+    },
+    "relative_sla_hours": 72.0
+  },
+  {
+    "scenario_id": "CW-02",
+    "category": "CLEAR_WEATHER",
+    "description": "Savannah to Atlanta container route; clear weather across Georgia",
+    "shipment": {
+      "shipment_id": "SHP-CW-02",
+      "origin": {
+        "port_code": "USSAV",
+        "latitude": 32.0809,
+        "longitude": -81.0912
+      },
+      "destination": {
+        "latitude": 33.749,
+        "longitude": -84.388
+      },
+      "cargo_type": "Automotive Parts",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "No active meteorological alerts along I-16 corridor"
+    },
+    "relative_sla_hours": 48.0
+  },
+  {
+    "scenario_id": "CW-03",
+    "category": "CLEAR_WEATHER",
+    "description": "Los Angeles to Phoenix freight run; sunny conditions on I-10",
+    "shipment": {
+      "shipment_id": "SHP-CW-03",
+      "origin": {
+        "port_code": "USLAX",
+        "latitude": 33.7701,
+        "longitude": -118.1937
+      },
+      "destination": {
+        "latitude": 33.4484,
+        "longitude": -112.074
+      },
+      "cargo_type": "Consumer Electronics",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 5000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Desert corridor clear; no severe weather alerts"
+    },
+    "relative_sla_hours": 60.0
+  },
+  {
+    "scenario_id": "CW-04",
+    "category": "CLEAR_WEATHER",
+    "description": "New York to Philadelphia regional distribution; calm conditions",
+    "shipment": {
+      "shipment_id": "SHP-CW-04",
+      "origin": {
+        "port_code": "USNYC",
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "destination": {
+        "latitude": 39.9526,
+        "longitude": -75.1652
+      },
+      "cargo_type": "Retail Apparel",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 2500.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Mid-Atlantic transit lane operates smoothly with no disruptions"
+    },
+    "relative_sla_hours": 36.0
+  },
+  {
+    "scenario_id": "CW-05",
+    "category": "CLEAR_WEATHER",
+    "description": "Seattle to Portland Pacific Northwest corridor; mild overcast",
+    "shipment": {
+      "shipment_id": "SHP-CW-05",
+      "origin": {
+        "port_code": "USSEA",
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "destination": {
+        "latitude": 45.5152,
+        "longitude": -122.6784
+      },
+      "cargo_type": "Paper and Lumber Products",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "I-5 corridor clear with no flood or storm warnings"
+    },
+    "relative_sla_hours": 48.0
+  },
+  {
+    "scenario_id": "CW-06",
+    "category": "CLEAR_WEATHER",
+    "description": "Oakland to Sacramento intermodal freight; alert located in distant Southern California",
+    "shipment": {
+      "shipment_id": "SHP-CW-06",
+      "origin": {
+        "port_code": "USOAK",
+        "latitude": 37.8044,
+        "longitude": -122.2712
+      },
+      "destination": {
+        "latitude": 38.5816,
+        "longitude": -121.4944
+      },
+      "cargo_type": "Agricultural Equipment",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3200.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-CW06-DISTANT",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -117.3,
+                32.5
+              ],
+              [
+                -116.8,
+                32.5
+              ],
+              [
+                -116.8,
+                33.0
+              ],
+              [
+                -117.3,
+                33.0
+              ],
+              [
+                -117.3,
+                32.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-CW06-DISTANT",
+          "severity": "Severe",
+          "event": "Wind Advisory",
+          "areaDesc": "San Diego County Deserts",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Distant San Diego alert does not intersect Northern California I-80 corridor"
+    },
+    "relative_sla_hours": 40.0
+  },
+  {
+    "scenario_id": "CW-07",
+    "category": "CLEAR_WEATHER",
+    "description": "Charleston to Charlotte textile transit; sunny across South and North Carolina",
+    "shipment": {
+      "shipment_id": "SHP-CW-07",
+      "origin": {
+        "port_code": "USCHS",
+        "latitude": 32.7765,
+        "longitude": -79.9311
+      },
+      "destination": {
+        "latitude": 35.2271,
+        "longitude": -80.8431
+      },
+      "cargo_type": "Textiles & Synthetic Fibers",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 2800.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "I-77 transit lane clear of meteorological bottlenecks"
+    },
+    "relative_sla_hours": 50.0
+  },
+  {
+    "scenario_id": "CW-08",
+    "category": "CLEAR_WEATHER",
+    "description": "Norfolk to Richmond corridor; alert located in South Florida",
+    "shipment": {
+      "shipment_id": "SHP-CW-08",
+      "origin": {
+        "port_code": "USNFK",
+        "latitude": 36.8508,
+        "longitude": -76.2859
+      },
+      "destination": {
+        "latitude": 37.5407,
+        "longitude": -77.436
+      },
+      "cargo_type": "Packaged Goods",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3100.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-CW08-FL",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -81.0,
+                26.0
+              ],
+              [
+                -80.0,
+                26.0
+              ],
+              [
+                -80.0,
+                27.0
+              ],
+              [
+                -81.0,
+                27.0
+              ],
+              [
+                -81.0,
+                26.0
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-CW08-FL",
+          "severity": "Severe",
+          "event": "Coastal Flood Warning",
+          "areaDesc": "South Florida Coast",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Florida coastal flood alert does not intersect Virginia I-64 corridor"
+    },
+    "relative_sla_hours": 36.0
+  },
+  {
+    "scenario_id": "CW-09",
+    "category": "CLEAR_WEATHER",
+    "description": "New Orleans to Memphis barge/road corridor; unobstructed Mississippi valley",
+    "shipment": {
+      "shipment_id": "SHP-CW-09",
+      "origin": {
+        "port_code": "USMSY",
+        "latitude": 29.9511,
+        "longitude": -90.0715
+      },
+      "destination": {
+        "latitude": 35.1495,
+        "longitude": -90.049
+      },
+      "cargo_type": "Steel Rebar & Tubing",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4500.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Clear skies and standard river/highway transit operating normally"
+    },
+    "relative_sla_hours": 64.0
+  },
+  {
+    "scenario_id": "CW-10",
+    "category": "CLEAR_WEATHER",
+    "description": "Baltimore to Harrisburg regional freight; calm weather across Maryland/PA",
+    "shipment": {
+      "shipment_id": "SHP-CW-10",
+      "origin": {
+        "port_code": "USBAL",
+        "latitude": 39.2904,
+        "longitude": -76.6122
+      },
+      "destination": {
+        "latitude": 40.2732,
+        "longitude": -76.8867
+      },
+      "cargo_type": "Beverage Cans & Glassware",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 2600.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [],
+    "ground_truth": {
+      "is_disrupted": false,
+      "expected_detour": false,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "I-83 corridor clear; direct dispatch executed"
+    },
+    "relative_sla_hours": 36.0
+  },
+  {
+    "scenario_id": "SD-01",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Galveston to Dallas route bisected by Category 4 Hurricane Harvey over Houston",
+    "shipment": {
+      "shipment_id": "SHP-SD-01",
+      "origin": {
+        "port_code": "USGAL",
+        "latitude": 29.3013,
+        "longitude": -94.7977
+      },
+      "destination": {
+        "latitude": 32.7767,
+        "longitude": -96.797
+      },
+      "cargo_type": "Industrial Machinery",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4500.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD01-HURRICANE",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -95.8,
+                29.5
+              ],
+              [
+                -94.8,
+                29.5
+              ],
+              [
+                -94.8,
+                30.6
+              ],
+              [
+                -95.8,
+                30.6
+              ],
+              [
+                -95.8,
+                29.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD01-HURRICANE",
+          "severity": "Extreme",
+          "event": "Hurricane Warning",
+          "areaDesc": "Greater Houston Transit Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Severe hurricane over Houston blocks I-45; automated detour via viable intermodal route (<$5k)"
+    },
+    "relative_sla_hours": 72.0
+  },
+  {
+    "scenario_id": "SD-02",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Miami to Orlando corridor obstructed by Tropical Storm along Florida Turnpike",
+    "shipment": {
+      "shipment_id": "SHP-SD-02",
+      "origin": {
+        "port_code": "USMIA",
+        "latitude": 25.7617,
+        "longitude": -80.1918
+      },
+      "destination": {
+        "latitude": 28.5383,
+        "longitude": -81.3792
+      },
+      "cargo_type": "Fresh Citrus & Tropical Fruit",
+      "perishability_hours": 48.0,
+      "demurrage_rate_per_day": 4000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD02-TROPICAL",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -80.8,
+                26.5
+              ],
+              [
+                -79.9,
+                26.5
+              ],
+              [
+                -79.9,
+                27.5
+              ],
+              [
+                -80.8,
+                27.5
+              ],
+              [
+                -80.8,
+                26.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD02-TROPICAL",
+          "severity": "Severe",
+          "event": "Tropical Storm Warning",
+          "areaDesc": "Treasure Coast and Palm Beach Transitway",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Tropical storm blocks direct turnpike; detour route automatically approved within SLA and cost limit"
+    },
+    "relative_sla_hours": 60.0
+  },
+  {
+    "scenario_id": "SD-03",
+    "category": "SEVERE_DISRUPTION",
+    "description": "New York to Buffalo I-90 corridor severed by severe lake-effect Blizzard",
+    "shipment": {
+      "shipment_id": "SHP-SD-03",
+      "origin": {
+        "port_code": "USNYC",
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "destination": {
+        "latitude": 42.8864,
+        "longitude": -78.8784
+      },
+      "cargo_type": "Auto Assemblies",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4200.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD03-BLIZZARD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -76.8,
+                41.5
+              ],
+              [
+                -75.8,
+                41.5
+              ],
+              [
+                -75.8,
+                42.5
+              ],
+              [
+                -76.8,
+                42.5
+              ],
+              [
+                -76.8,
+                41.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD03-BLIZZARD",
+          "severity": "Severe",
+          "event": "Blizzard Warning",
+          "areaDesc": "Central New York Thruway Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Blizzard shuts down I-90; agent reroutes avoiding snowbelt (<$5k)"
+    },
+    "relative_sla_hours": 65.0
+  },
+  {
+    "scenario_id": "SD-04",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Chicago to Detroit corridor blocked by Lake Effect Snowstorm over Southern Michigan",
+    "shipment": {
+      "shipment_id": "SHP-SD-04",
+      "origin": {
+        "port_code": "USCHI",
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      },
+      "destination": {
+        "latitude": 42.3314,
+        "longitude": -83.0458
+      },
+      "cargo_type": "Precision Machine Tools",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3800.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD04-SNOW",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -86.0,
+                41.8
+              ],
+              [
+                -84.5,
+                41.8
+              ],
+              [
+                -84.5,
+                42.6
+              ],
+              [
+                -86.0,
+                42.6
+              ],
+              [
+                -86.0,
+                41.8
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD04-SNOW",
+          "severity": "Severe",
+          "event": "Winter Storm Warning",
+          "areaDesc": "I-94 Southwest Michigan Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Snowstorm closes I-94; intermodal detour selected automatically under $5,000 threshold"
+    },
+    "relative_sla_hours": 48.0
+  },
+  {
+    "scenario_id": "SD-05",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Seattle to Spokane mountain route severed by Cascades Blizzard & Avalanche Warning",
+    "shipment": {
+      "shipment_id": "SHP-SD-05",
+      "origin": {
+        "port_code": "USSEA",
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "destination": {
+        "latitude": 47.6588,
+        "longitude": -117.426
+      },
+      "cargo_type": "Aircraft Components",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 5200.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD05-PASS",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -121.8,
+                47.2
+              ],
+              [
+                -120.8,
+                47.2
+              ],
+              [
+                -120.8,
+                47.8
+              ],
+              [
+                -121.8,
+                47.8
+              ],
+              [
+                -121.8,
+                47.2
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD05-PASS",
+          "severity": "Extreme",
+          "event": "Blizzard Warning",
+          "areaDesc": "Snoqualmie and Stevens Mountain Passes",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Mountain pass closed; agent computes southern detour safely under $5,000 threshold"
+    },
+    "relative_sla_hours": 55.0
+  },
+  {
+    "scenario_id": "SD-06",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Savannah to Nashville corridor intercepted by Severe Tornado Outbreak over North Georgia",
+    "shipment": {
+      "shipment_id": "SHP-SD-06",
+      "origin": {
+        "port_code": "USSAV",
+        "latitude": 32.0809,
+        "longitude": -81.0912
+      },
+      "destination": {
+        "latitude": 36.1627,
+        "longitude": -86.7816
+      },
+      "cargo_type": "Chemical Raw Materials",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4600.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD06-TORNADO",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -85.5,
+                34.0
+              ],
+              [
+                -84.5,
+                34.0
+              ],
+              [
+                -84.5,
+                35.2
+              ],
+              [
+                -85.5,
+                35.2
+              ],
+              [
+                -85.5,
+                34.0
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD06-TORNADO",
+          "severity": "Extreme",
+          "event": "Tornado Warning",
+          "areaDesc": "North Georgia and Tennessee Valley",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Tornado cell blocks direct route; reroute alternative selected and dispatched"
+    },
+    "relative_sla_hours": 60.0
+  },
+  {
+    "scenario_id": "SD-07",
+    "category": "SEVERE_DISRUPTION",
+    "description": "New Orleans to Birmingham corridor compromised by Severe Flash Flooding in Mississippi",
+    "shipment": {
+      "shipment_id": "SHP-SD-07",
+      "origin": {
+        "port_code": "USMSY",
+        "latitude": 29.9511,
+        "longitude": -90.0715
+      },
+      "destination": {
+        "latitude": 33.5186,
+        "longitude": -86.8104
+      },
+      "cargo_type": "Heavy Construction Equipment",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4100.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD07-FLOOD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -89.0,
+                31.5
+              ],
+              [
+                -87.5,
+                31.5
+              ],
+              [
+                -87.5,
+                32.8
+              ],
+              [
+                -89.0,
+                32.8
+              ],
+              [
+                -89.0,
+                31.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD07-FLOOD",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "I-59 Meridian Freight Arterial",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Flooding submerges interstate; detour dispatched automatically without exceeding cost threshold"
+    },
+    "relative_sla_hours": 52.0
+  },
+  {
+    "scenario_id": "SD-08",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Charleston to Knoxville route blocked by Mountain Flash Flooding in Blue Ridge",
+    "shipment": {
+      "shipment_id": "SHP-SD-08",
+      "origin": {
+        "port_code": "USCHS",
+        "latitude": 32.7765,
+        "longitude": -79.9311
+      },
+      "destination": {
+        "latitude": 35.9606,
+        "longitude": -83.9207
+      },
+      "cargo_type": "Paper Pulp Balers",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3400.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD08-MTNFLD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -82.8,
+                34.5
+              ],
+              [
+                -81.8,
+                34.5
+              ],
+              [
+                -81.8,
+                35.6
+              ],
+              [
+                -82.8,
+                35.6
+              ],
+              [
+                -82.8,
+                34.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD08-MTNFLD",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "Blue Ridge Escarpment / I-26 Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Blue Ridge mudslides block I-26; alternate detour selected"
+    },
+    "relative_sla_hours": 50.0
+  },
+  {
+    "scenario_id": "SD-09",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Norfolk to Pittsburgh transit path crossing crippling Ice Storm in Shenandoah",
+    "shipment": {
+      "shipment_id": "SHP-SD-09",
+      "origin": {
+        "port_code": "USNFK",
+        "latitude": 36.8508,
+        "longitude": -76.2859
+      },
+      "destination": {
+        "latitude": 40.4406,
+        "longitude": -79.9959
+      },
+      "cargo_type": "Steel Billets",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3900.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD09-ICE",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -78.8,
+                38.0
+              ],
+              [
+                -77.8,
+                38.0
+              ],
+              [
+                -77.8,
+                39.2
+              ],
+              [
+                -78.8,
+                39.2
+              ],
+              [
+                -78.8,
+                38.0
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD09-ICE",
+          "severity": "Severe",
+          "event": "Ice Storm Warning",
+          "areaDesc": "Shenandoah Valley Mountain Highway",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Glaze ice shuts mountain passes; intermodal detour dispatched automatically"
+    },
+    "relative_sla_hours": 58.0
+  },
+  {
+    "scenario_id": "SD-10",
+    "category": "SEVERE_DISRUPTION",
+    "description": "Jacksonville to Atlanta route disrupted by Severe Thunderstorms and Gale Winds in Georgia",
+    "shipment": {
+      "shipment_id": "SHP-SD-10",
+      "origin": {
+        "port_code": "USJAX",
+        "latitude": 30.3322,
+        "longitude": -81.6557
+      },
+      "destination": {
+        "latitude": 33.749,
+        "longitude": -84.388
+      },
+      "cargo_type": "Beverage Distribution",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 3200.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-SD10-THUNDER",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -84.0,
+                31.8
+              ],
+              [
+                -82.8,
+                31.8
+              ],
+              [
+                -82.8,
+                32.8
+              ],
+              [
+                -84.0,
+                32.8
+              ],
+              [
+                -84.0,
+                31.8
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-SD10-THUNDER",
+          "severity": "Severe",
+          "event": "Severe Thunderstorm Warning",
+          "areaDesc": "I-75 South Georgia Freight Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Downed trees and flooding along I-75; alternate detour auto-approved"
+    },
+    "relative_sla_hours": 44.0
+  },
+  {
+    "scenario_id": "HC-01",
+    "category": "HIGH_COST_ESCALATION",
+    "description": "Long Beach to Chicago transcontinental freight route interrupted by Midwestern Blizzard; detour cost exceeds $5k threshold",
+    "shipment": {
+      "shipment_id": "SHP-HC-01",
+      "origin": {
+        "port_code": "USLAX",
+        "latitude": 33.7701,
+        "longitude": -118.1937
+      },
+      "destination": {
+        "latitude": 42.3601,
+        "longitude": -71.0589
+      },
+      "cargo_type": "High-Value Solar Panels",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 7500.0,
+      "sla_delivery_deadline": "2026-10-26T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-HC01-MIDWEST",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -98.0,
+                36.5
+              ],
+              [
+                -94.0,
+                36.5
+              ],
+              [
+                -94.0,
+                39.5
+              ],
+              [
+                -98.0,
+                39.5
+              ],
+              [
+                -98.0,
+                36.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-HC01-MIDWEST",
+          "severity": "Extreme",
+          "event": "Blizzard Warning",
+          "areaDesc": "Midwest Transcontinental Freight Artery",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Detour surcharge (approx $9,000+) exceeds enterprise $5,000 limit; halts at human_review interrupt"
+    },
+    "relative_sla_hours": 96.0
+  },
+  {
+    "scenario_id": "HC-02",
+    "category": "HIGH_COST_ESCALATION",
+    "description": "Seattle to Memphis long-haul route obstructed by Rocky Mountain Winter Storm; high surcharge triggers HITL gate",
+    "shipment": {
+      "shipment_id": "SHP-HC-02",
+      "origin": {
+        "port_code": "USSEA",
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "destination": {
+        "latitude": 35.1495,
+        "longitude": -90.049
+      },
+      "cargo_type": "Data Center Server Racks",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 8000.0,
+      "sla_delivery_deadline": "2026-10-26T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-HC02-ROCKIES",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -108.0,
+                41.5
+              ],
+              [
+                -104.0,
+                41.5
+              ],
+              [
+                -104.0,
+                43.5
+              ],
+              [
+                -108.0,
+                43.5
+              ],
+              [
+                -108.0,
+                41.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-HC02-ROCKIES",
+          "severity": "Extreme",
+          "event": "Winter Storm Warning",
+          "areaDesc": "I-80 Wyoming / Colorado Continental Divide",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Long haul detour surcharge ($8,000+) breaches $5,000 threshold; requires dispatcher sign-off"
+    },
+    "relative_sla_hours": 100.0
+  },
+  {
+    "scenario_id": "HC-03",
+    "category": "HIGH_COST_ESCALATION",
+    "description": "Los Angeles to Atlanta cross-country transit blocked by Severe Flash Flooding in Texas panhandle",
+    "shipment": {
+      "shipment_id": "SHP-HC-03",
+      "origin": {
+        "port_code": "USLAX",
+        "latitude": 33.7701,
+        "longitude": -118.1937
+      },
+      "destination": {
+        "latitude": 33.749,
+        "longitude": -84.388
+      },
+      "cargo_type": "Industrial Turbines",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 7200.0,
+      "sla_delivery_deadline": "2026-10-26T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-HC03-TXFLOOD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -102.5,
+                33.0
+              ],
+              [
+                -99.5,
+                33.0
+              ],
+              [
+                -99.5,
+                35.0
+              ],
+              [
+                -102.5,
+                35.0
+              ],
+              [
+                -102.5,
+                33.0
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-HC03-TXFLOOD",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "West Texas / Panhandle I-40 Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Intermodal detour cost ($10,000+) exceeds $5,000 threshold; human dispatcher approval required"
+    },
+    "relative_sla_hours": 96.0
+  },
+  {
+    "scenario_id": "HC-04",
+    "category": "HIGH_COST_ESCALATION",
+    "description": "Oakland to New York coast-to-coast container shipment disrupted by Great Plains Blizzard",
+    "shipment": {
+      "shipment_id": "SHP-HC-04",
+      "origin": {
+        "port_code": "USOAK",
+        "latitude": 37.8044,
+        "longitude": -122.2712
+      },
+      "destination": {
+        "latitude": 40.7128,
+        "longitude": -74.006
+      },
+      "cargo_type": "Specialty Chemical Drums",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 9500.0,
+      "sla_delivery_deadline": "2026-10-27T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-HC04-PLAINS",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -93.0,
+                39.5
+              ],
+              [
+                -89.0,
+                39.5
+              ],
+              [
+                -89.0,
+                41.5
+              ],
+              [
+                -93.0,
+                41.5
+              ],
+              [
+                -93.0,
+                39.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-HC04-PLAINS",
+          "severity": "Extreme",
+          "event": "Blizzard Warning",
+          "areaDesc": "Midwest I-80 / Transcontinental Artery",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Coast-to-coast detour surcharge ($13,000+) exceeds financial authorization threshold"
+    },
+    "relative_sla_hours": 120.0
+  },
+  {
+    "scenario_id": "HC-05",
+    "category": "HIGH_COST_ESCALATION",
+    "description": "Miami to Denver heavy freight lane halted by Severe Tornado Outbreak across Arkansas/Missouri",
+    "shipment": {
+      "shipment_id": "SHP-HC-05",
+      "origin": {
+        "port_code": "USMIA",
+        "latitude": 25.7617,
+        "longitude": -80.1918
+      },
+      "destination": {
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "cargo_type": "Power Grid Transformers",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 8500.0,
+      "sla_delivery_deadline": "2026-10-26T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-HC05-TORNADO",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -103.0,
+                34.5
+              ],
+              [
+                -98.0,
+                34.5
+              ],
+              [
+                -98.0,
+                37.5
+              ],
+              [
+                -103.0,
+                37.5
+              ],
+              [
+                -103.0,
+                34.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-HC05-TORNADO",
+          "severity": "Extreme",
+          "event": "Tornado Warning",
+          "areaDesc": "Mid-Continent Transcontinental Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Detour cost ($9,000+) exceeds $5,000 threshold; halts for human review"
+    },
+    "relative_sla_hours": 100.0
+  },
+  {
+    "scenario_id": "EC-01",
+    "category": "EDGE_CASE",
+    "description": "Perishable medical cargo (Vaccines, 14h cold chain limit) during Hurricane; agent selects fast ROAD detour over slow modes",
+    "shipment": {
+      "shipment_id": "SHP-EC-01",
+      "origin": {
+        "port_code": "USGAL",
+        "latitude": 29.3013,
+        "longitude": -94.7977
+      },
+      "destination": {
+        "latitude": 32.7767,
+        "longitude": -96.797
+      },
+      "cargo_type": "Medical Cold Chain Vaccines",
+      "perishability_hours": 14.0,
+      "demurrage_rate_per_day": 12000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-EC01-HURR",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -95.8,
+                29.5
+              ],
+              [
+                -94.8,
+                29.5
+              ],
+              [
+                -94.8,
+                30.6
+              ],
+              [
+                -95.8,
+                30.6
+              ],
+              [
+                -95.8,
+                29.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-EC01-HURR",
+          "severity": "Extreme",
+          "event": "Hurricane Warning",
+          "areaDesc": "Galveston / Houston Maritime Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Agent selects ROAD mode (7.5h) within 14h cold chain shelf life, rejecting slow RAIL (18h) and BARGE (50h)"
+    },
+    "relative_sla_hours": 36.0
+  },
+  {
+    "scenario_id": "EC-02",
+    "category": "EDGE_CASE",
+    "description": "Expired SLA delivery deadline (deadline 30h in past); detour delay breaches 24h threshold triggering mandatory human review",
+    "shipment": {
+      "shipment_id": "SHP-EC-02",
+      "origin": {
+        "port_code": "USGAL",
+        "latitude": 29.3013,
+        "longitude": -94.7977
+      },
+      "destination": {
+        "latitude": 29.4241,
+        "longitude": -98.4936
+      },
+      "cargo_type": "Commercial Printing Equipment",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 4000.0,
+      "sla_delivery_deadline": "2026-10-10T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-EC02-FLOOD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -96.8,
+                29.0
+              ],
+              [
+                -95.8,
+                29.0
+              ],
+              [
+                -95.8,
+                30.0
+              ],
+              [
+                -96.8,
+                30.0
+              ],
+              [
+                -96.8,
+                29.0
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-EC02-FLOOD",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "I-10 West Texas Highway Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "SLA deadline is expired and detour arrival exceeds deadline by >24 hours, triggering approval gate"
+    },
+    "relative_sla_hours": -30.0
+  },
+  {
+    "scenario_id": "EC-03",
+    "category": "EDGE_CASE",
+    "description": "High-value semiconductor freight with extreme demurrage rate ($35,000/day); rerouting saves over $65k in demurrage",
+    "shipment": {
+      "shipment_id": "SHP-EC-03",
+      "origin": {
+        "port_code": "USSAV",
+        "latitude": 32.0809,
+        "longitude": -81.0912
+      },
+      "destination": {
+        "latitude": 33.749,
+        "longitude": -84.388
+      },
+      "cargo_type": "Semiconductor ASICs and Wafers",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 35000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-EC03-STORM",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -83.5,
+                32.5
+              ],
+              [
+                -82.5,
+                32.5
+              ],
+              [
+                -82.5,
+                33.5
+              ],
+              [
+                -83.5,
+                33.5
+              ],
+              [
+                -83.5,
+                32.5
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-EC03-STORM",
+          "severity": "Severe",
+          "event": "Severe Thunderstorm Warning",
+          "areaDesc": "Central Georgia Freight Artery",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Rerouting cost ~$1,200 vs $70,000 blind demurrage penalty achieves >98% route cost optimality"
+    },
+    "relative_sla_hours": 48.0
+  },
+  {
+    "scenario_id": "EC-04",
+    "category": "EDGE_CASE",
+    "description": "Low-cost detour but SLA deadline expired by 25h; delay exceeds 24h threshold triggering HITL approval",
+    "shipment": {
+      "shipment_id": "SHP-EC-04",
+      "origin": {
+        "port_code": "USNFK",
+        "latitude": 36.8508,
+        "longitude": -76.2859
+      },
+      "destination": {
+        "latitude": 37.5407,
+        "longitude": -77.436
+      },
+      "cargo_type": "Automotive Replacement Glass",
+      "perishability_hours": null,
+      "demurrage_rate_per_day": 5000.0,
+      "sla_delivery_deadline": "2026-10-11T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-EC04-FLOOD",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -77.2,
+                36.9
+              ],
+              [
+                -76.5,
+                36.9
+              ],
+              [
+                -76.5,
+                37.4
+              ],
+              [
+                -77.2,
+                37.4
+              ],
+              [
+                -77.2,
+                36.9
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-EC04-FLOOD",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "I-64 Tidewater Virginia Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": true,
+      "expected_mode": "ROAD",
+      "reason": "Detour cost is low ($500 < $5,000) but estimated delay exceeds 24h threshold, halting for dispatcher review"
+    },
+    "relative_sla_hours": -25.0
+  },
+  {
+    "scenario_id": "EC-05",
+    "category": "EDGE_CASE",
+    "description": "Urgent cryo-preserved biotech therapeutics (perishability shelf life = 8h); agent picks fast road detour avoiding corridor storm",
+    "shipment": {
+      "shipment_id": "SHP-EC-05",
+      "origin": {
+        "port_code": "USSEA",
+        "latitude": 47.6062,
+        "longitude": -122.3321
+      },
+      "destination": {
+        "latitude": 45.5152,
+        "longitude": -122.6784
+      },
+      "cargo_type": "Cryogenic Biological Samples",
+      "perishability_hours": 8.0,
+      "demurrage_rate_per_day": 15000.0,
+      "sla_delivery_deadline": "2026-10-25T12:00:00Z",
+      "current_status": "IN_TRANSIT"
+    },
+    "active_alerts": [
+      {
+        "id": "https://api.weather.gov/alerts/NWS-ALERT-EC05-LANDSLIDE",
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -123.0,
+                46.2
+              ],
+              [
+                -122.3,
+                46.2
+              ],
+              [
+                -122.3,
+                46.8
+              ],
+              [
+                -123.0,
+                46.8
+              ],
+              [
+                -123.0,
+                46.2
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "id": "NWS-ALERT-EC05-LANDSLIDE",
+          "severity": "Severe",
+          "event": "Flash Flood Warning",
+          "areaDesc": "I-5 Southwest Washington Corridor",
+          "ends": "2026-10-25T18:00:00Z"
+        }
+      }
+    ],
+    "ground_truth": {
+      "is_disrupted": true,
+      "expected_detour": true,
+      "requires_human_approval": false,
+      "expected_mode": "ROAD",
+      "reason": "Road detour (4.7h) respects 8h perishability shelf life, preventing cryogenic spoilage"
+    },
+    "relative_sla_hours": 24.0
+  }
+]

@@ -152,9 +152,7 @@ def compute_intermodal_metrics_cached(
         )
 
     if distance_km is None:
-        direct_dist = calculate_haversine_distance_km(
-            origin_lat, origin_lon, dest_lat, dest_lon
-        )
+        direct_dist = calculate_haversine_distance_km(origin_lat, origin_lon, dest_lat, dest_lon)
         distance_km = round(direct_dist * params["distance_multiplier"], 2)
 
     travel_hours = distance_km / params["speed_kmh"]
@@ -278,9 +276,7 @@ class IntermodalRouteSolver:
         params = MODE_PARAMETERS[mode]
         # Total additional cost = (base distance cost + fuel + intermodal transfer fee)
         base_cost = distance_km * params["cost_per_km"]
-        total_additional_cost = round(
-            base_cost + fuel_cost + params["transfer_surcharge_usd"], 2
-        )
+        total_additional_cost = round(base_cost + fuel_cost + params["transfer_surcharge_usd"], 2)
 
         route_id = f"REROUTE-{mode.value}-{manifest.shipment_id}"
 

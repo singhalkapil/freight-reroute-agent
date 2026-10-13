@@ -93,11 +93,11 @@ class TestCoordinatesAndPortLocation:
     @pytest.mark.parametrize(
         "invalid_code",
         [
-            "usgal",     # lowercase
-            "US",        # too short (< 3)
+            "usgal",  # lowercase
+            "US",  # too short (< 3)
             "TOOLONGPORT123",  # too long (> 10)
-            "US GAL",    # whitespace
-            "US@#$",     # special characters
+            "US GAL",  # whitespace
+            "US@#$",  # special characters
         ],
     )
     def test_invalid_port_code(self, invalid_code: str):
@@ -160,7 +160,9 @@ class TestShipmentManifest:
             (0.0, -185.0),
         ],
     )
-    def test_invalid_destination_coordinates_in_manifest(self, valid_manifest_payload, bad_lat, bad_lon):
+    def test_invalid_destination_coordinates_in_manifest(
+        self, valid_manifest_payload, bad_lat, bad_lon
+    ):
         valid_manifest_payload["destination"]["latitude"] = bad_lat
         valid_manifest_payload["destination"]["longitude"] = bad_lon
         with pytest.raises(ValidationError):
@@ -356,7 +358,9 @@ class TestShipmentTrackingState:
         assert state.accumulated_delay_hours == 3.5
         assert state.active_reroute is None
 
-    def test_tracking_state_negative_delay_rejected(self, valid_manifest_payload, valid_destination_data):
+    def test_tracking_state_negative_delay_rejected(
+        self, valid_manifest_payload, valid_destination_data
+    ):
         manifest = ShipmentManifest.model_validate(valid_manifest_payload)
         current_coords = Coordinates(**valid_destination_data)
 
@@ -377,6 +381,3 @@ class TestShipmentTrackingState:
         )
         with pytest.raises(ValidationError):
             state.status = ShipmentStatus.DELAYED  # type: ignore
-
-
-

@@ -85,7 +85,9 @@ class ShipmentManifest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     shipment_id: str = Field(..., min_length=1, description="Unique enterprise shipment identifier")
-    origin: PortLocation = Field(..., description="Origin port facility with coordinates and port code")
+    origin: PortLocation = Field(
+        ..., description="Origin port facility with coordinates and port code"
+    )
     destination: Coordinates = Field(..., description="Destination coordinates")
     cargo_type: str = Field(..., min_length=1, description="Commodity or cargo classification")
     perishability_hours: float | None = Field(
@@ -112,7 +114,9 @@ class ShipmentManifest(BaseModel):
     def validate_deadline_has_timezone(cls, value: datetime) -> datetime:
         """Enforce timezone-aware SLA delivery deadlines to avoid ambiguous temporal comparisons."""
         if value.tzinfo is None:
-            raise ValueError("sla_delivery_deadline must be timezone-aware (e.g. UTC or explicit tz offset)")
+            raise ValueError(
+                "sla_delivery_deadline must be timezone-aware (e.g. UTC or explicit tz offset)"
+            )
         return value
 
 
@@ -123,7 +127,9 @@ class WeatherDisruptionAlert(BaseModel):
 
     alert_id: str = Field(..., min_length=1, description="Unique alert identifier")
     severity: AlertSeverity = Field(..., description="Disruption severity level")
-    event_type: str = Field(..., min_length=1, description="Weather event classification (e.g., Hurricane, Flood)")
+    event_type: str = Field(
+        ..., min_length=1, description="Weather event classification (e.g., Hurricane, Flood)"
+    )
     polygon_coordinates: list[tuple[Latitude, Longitude]] = Field(
         ...,
         min_length=3,
@@ -133,19 +139,25 @@ class WeatherDisruptionAlert(BaseModel):
         ...,
         description="Expiration / clearance timestamp of disruption alert",
     )
-    affected_corridor: str = Field(..., min_length=1, description="Name or identifier of affected transit corridor")
+    affected_corridor: str = Field(
+        ..., min_length=1, description="Name or identifier of affected transit corridor"
+    )
 
     @field_validator("effective_until")
     @classmethod
     def validate_effective_until_has_timezone(cls, value: datetime) -> datetime:
         """Enforce timezone-aware expiration timestamp to avoid offset-naive comparisons."""
         if value.tzinfo is None:
-            raise ValueError("effective_until must be timezone-aware (e.g. UTC or explicit tz offset)")
+            raise ValueError(
+                "effective_until must be timezone-aware (e.g. UTC or explicit tz offset)"
+            )
         return value
 
     @field_validator("polygon_coordinates")
     @classmethod
-    def validate_polygon_vertices(cls, coords: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    def validate_polygon_vertices(
+        cls, coords: list[tuple[float, float]]
+    ) -> list[tuple[float, float]]:
         """Validate each coordinate tuple in the disruption polygon."""
         if len(coords) < 3:
             raise ValueError("Polygon must contain at least 3 coordinate vertices")
@@ -154,9 +166,13 @@ class WeatherDisruptionAlert(BaseModel):
                 raise ValueError(f"Vertex at index {idx} must be a (lat, lon) 2-tuple")
             lat, lon = pt
             if not (-90.0 <= lat <= 90.0):
-                raise ValueError(f"Vertex at index {idx} has invalid latitude: {lat} (must be -90.0 to 90.0)")
+                raise ValueError(
+                    f"Vertex at index {idx} has invalid latitude: {lat} (must be -90.0 to 90.0)"
+                )
             if not (-180.0 <= lon <= 180.0):
-                raise ValueError(f"Vertex at index {idx} has invalid longitude: {lon} (must be -180.0 to 180.0)")
+                raise ValueError(
+                    f"Vertex at index {idx} has invalid longitude: {lon} (must be -180.0 to 180.0)"
+                )
         return coords
 
 
@@ -168,7 +184,9 @@ class RerouteAlternative(BaseModel):
     route_id: str = Field(..., min_length=1, description="Unique alternative route identifier")
     mode: TransportMode = Field(..., description="Intermodal transit mode (ROAD, RAIL, BARGE)")
     distance_km: float = Field(..., gt=0.0, description="Total transit distance in kilometers")
-    estimated_transit_hours: float = Field(..., gt=0.0, description="Estimated total transit duration in hours")
+    estimated_transit_hours: float = Field(
+        ..., gt=0.0, description="Estimated total transit duration in hours"
+    )
     additional_cost_usd: float = Field(
         ...,
         ge=0.0,
@@ -187,7 +205,9 @@ class RerouteDecision(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     shipment_id: str = Field(..., min_length=1, description="Shipment identifier being evaluated")
-    selected_route: RerouteAlternative = Field(..., description="Selected optimal reroute alternative")
+    selected_route: RerouteAlternative = Field(
+        ..., description="Selected optimal reroute alternative"
+    )
     requires_human_approval: bool = Field(
         ...,
         description="Flag indicating if cost/delay threshold triggers mandatory human sign-off",
@@ -197,7 +217,9 @@ class RerouteDecision(BaseModel):
         ge=0.0,
         description="Estimated demurrage penalty saved in USD by taking reroute",
     )
-    rationale: str = Field(..., min_length=1, description="Audit trail and reasoning behind decision")
+    rationale: str = Field(
+        ..., min_length=1, description="Audit trail and reasoning behind decision"
+    )
 
 
 class ShipmentTrackingState(BaseModel):
@@ -221,7 +243,7 @@ class LoadTenderPayload(BaseModel):
     assigned_mode: TransportMode = Field(..., description="Assigned freight transit mode")
     route_id: str = Field(..., min_length=1, description="Assigned primary or detour route ID")
     edi_raw: str = Field(..., min_length=1, description="Raw ANSI X12 EDI 204 string")
-    segment_count: int = Field(..., gt=0, description="Exact count of included EDI transaction segments")
+    segment_count: int = Field(
+        ..., gt=0, description="Exact count of included EDI transaction segments"
+    )
     generated_at: datetime = Field(..., description="Timestamp of tender generation in UTC")
-
-

@@ -129,12 +129,18 @@ class NOAAWeatherClient:
                 # Handle 429 Rate Limits
                 if response.status_code == 429:
                     if retries >= self.max_retries:
-                        raise NOAARateLimitError("NOAA NWS API rate limit (429) exceeded maximum retries")
+                        raise NOAARateLimitError(
+                            "NOAA NWS API rate limit (429) exceeded maximum retries"
+                        )
                     retry_after = response.headers.get("Retry-After")
-                    raw_sleep = float(retry_after) if retry_after and retry_after.isdigit() else backoff
+                    raw_sleep = (
+                        float(retry_after) if retry_after and retry_after.isdigit() else backoff
+                    )
                     # Cap sleep to prevent thread lockup and add small randomized jitter
                     sleep_time = min(raw_sleep, self.max_retry_after) + random.uniform(0.05, 0.20)
-                    logger.warning("HTTP 429 Rate Limit from NOAA API. Backing off for %.2fs", sleep_time)
+                    logger.warning(
+                        "HTTP 429 Rate Limit from NOAA API. Backing off for %.2fs", sleep_time
+                    )
                     time.sleep(sleep_time)
                     retries += 1
                     backoff *= self.backoff_factor
@@ -203,14 +209,18 @@ class NOAAWeatherClient:
         geom_type = geometry_data.get("type")
         raw_coords = geometry_data.get("coordinates")
         if not geom_type or not raw_coords:
-            logger.debug("Skipping alert feature %s: empty geometry type or coordinates", props.get("id"))
+            logger.debug(
+                "Skipping alert feature %s: empty geometry type or coordinates", props.get("id")
+            )
             return None
 
         # Build Shapely geometry with exception safeguarding
         try:
             geom = shape(geometry_data)
         except (GEOSException, ValueError, TypeError) as err:
-            logger.warning("Failed to construct Shapely geometry for alert %s: %s", props.get("id"), err)
+            logger.warning(
+                "Failed to construct Shapely geometry for alert %s: %s", props.get("id"), err
+            )
             return None
 
         if geom.is_empty:
@@ -222,7 +232,9 @@ class NOAAWeatherClient:
             try:
                 geom = make_valid(geom)
             except Exception as err:
-                logger.warning("Failed to repair invalid geometry for alert %s: %s", props.get("id"), err)
+                logger.warning(
+                    "Failed to repair invalid geometry for alert %s: %s", props.get("id"), err
+                )
                 return None
 
         # Resolve polygon or multi-polygon from repaired geometry
@@ -242,7 +254,9 @@ class NOAAWeatherClient:
             largest_poly = max(geom.geoms, key=lambda p: p.area)
             poly_coords = [(float(lat), float(lon)) for lon, lat in largest_poly.exterior.coords]
         else:
-            logger.debug("Skipping alert %s: geometry is %s (not a polygon)", props.get("id"), geom.geom_type)
+            logger.debug(
+                "Skipping alert %s: geometry is %s (not a polygon)", props.get("id"), geom.geom_type
+            )
             return None
 
         if len(poly_coords) < 3:
@@ -285,7 +299,9 @@ class NOAAWeatherClient:
 
     def check_corridor_disruptions(
         self,
-        corridor_linestring: LineString | list[tuple[float, float]] | list[Coordinates | PortLocation],
+        corridor_linestring: LineString
+        | list[tuple[float, float]]
+        | list[Coordinates | PortLocation],
         status: str = "actual",
     ) -> list[WeatherDisruptionAlert]:
         """Test geometric intersection between a freight corridor and active NOAA alert polygons.
@@ -303,7 +319,9 @@ class NOAAWeatherClient:
             normalized_pts = [normalize_to_geojson_lon_lat(p) for p in corridor_linestring]
             corridor_geom = LineString(normalized_pts)
         else:
-            raise TypeError("corridor_linestring must be a Shapely LineString or list of coordinates")
+            raise TypeError(
+                "corridor_linestring must be a Shapely LineString or list of coordinates"
+            )
 
         features = self.fetch_active_alerts(status=status)
         intersecting_alerts: list[WeatherDisruptionAlert] = []
@@ -318,7 +336,9 @@ class NOAAWeatherClient:
                 if alert_geom.intersects(corridor_geom):
                     intersecting_alerts.append(alert_model)
             except GEOSException as err:
-                logger.warning("Intersection evaluation failed for alert %s: %s", alert_model.alert_id, err)
+                logger.warning(
+                    "Intersection evaluation failed for alert %s: %s", alert_model.alert_id, err
+                )
                 continue
 
         return intersecting_alerts

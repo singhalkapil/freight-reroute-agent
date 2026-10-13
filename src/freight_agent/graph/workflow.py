@@ -75,7 +75,9 @@ def make_detect_bottlenecks_node(weather_client: NOAAWeatherClient | None = None
 
         is_disrupted = len(alerts) > 0
         if is_disrupted:
-            alert_descs = [f"{a.severity} {a.event_type} on '{a.affected_corridor}'" for a in alerts]
+            alert_descs = [
+                f"{a.severity} {a.event_type} on '{a.affected_corridor}'" for a in alerts
+            ]
             log_entry = (
                 f"DETECT_BOTTLENECKS: Detected {len(alerts)} active corridor disruption(s): "
                 + "; ".join(alert_descs)
@@ -108,7 +110,9 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
                 "candidate_routes": [],
                 "decision": None,
                 "requires_human_review": False,
-                "audit_log": ["CALCULATE_ALTERNATIVES: Skipped detour calculation; corridor is clear."],
+                "audit_log": [
+                    "CALCULATE_ALTERNATIVES: Skipped detour calculation; corridor is clear."
+                ],
             }
 
         risk_desc = f"Avoids {alerts[0].event_type} disruption ({alerts[0].affected_corridor})"
@@ -119,8 +123,12 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
 
         # Select optimal route: filter candidates that meet perishability, then sort by additional cost
         viable_routes = [
-            r for r in alternatives
-            if (shipment.perishability_hours is None or r.estimated_transit_hours <= shipment.perishability_hours)
+            r
+            for r in alternatives
+            if (
+                shipment.perishability_hours is None
+                or r.estimated_transit_hours <= shipment.perishability_hours
+            )
         ]
         # Fall back to fastest route if all exceed perishability
         selected_route = (
@@ -132,7 +140,9 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
         # Evaluate SLA delay breach for the selected detour
         now = datetime.now(UTC)
         estimated_arrival = now + timedelta(hours=selected_route.estimated_transit_hours)
-        sla_delay_seconds = max(0.0, (estimated_arrival - shipment.sla_delivery_deadline).total_seconds())
+        sla_delay_seconds = max(
+            0.0, (estimated_arrival - shipment.sla_delivery_deadline).total_seconds()
+        )
         sla_delay_hours = sla_delay_seconds / 3600.0
 
         # Calculate demurrage penalty saved by rerouting (avoiding 2-day corridor shutdown)
@@ -145,12 +155,17 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
 
         reasons = []
         if cost_exceeded:
-            reasons.append(f"surcharge ${selected_route.additional_cost_usd:,.2f} exceeds ${COST_APPROVAL_THRESHOLD_USD:,.2f}")
+            reasons.append(
+                f"surcharge ${selected_route.additional_cost_usd:,.2f} exceeds ${COST_APPROVAL_THRESHOLD_USD:,.2f}"
+            )
         if sla_exceeded:
-            reasons.append(f"estimated delay {sla_delay_hours:.1f}h exceeds {SLA_BREACH_APPROVAL_THRESHOLD_HOURS}h threshold")
-        rationale = (
-            f"Intermodal reroute via {selected_route.mode.value} avoids {risk_desc}. "
-            + (f"Mandatory human review triggered: {'; '.join(reasons)}." if requires_approval else "Approved automatically.")
+            reasons.append(
+                f"estimated delay {sla_delay_hours:.1f}h exceeds {SLA_BREACH_APPROVAL_THRESHOLD_HOURS}h threshold"
+            )
+        rationale = f"Intermodal reroute via {selected_route.mode.value} avoids {risk_desc}. " + (
+            f"Mandatory human review triggered: {'; '.join(reasons)}."
+            if requires_approval
+            else "Approved automatically."
         )
 
         decision = RerouteDecision(

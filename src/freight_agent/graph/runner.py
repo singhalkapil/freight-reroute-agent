@@ -95,7 +95,8 @@ class FreightAgentRunner:
         resume_command = Command(
             resume={
                 "approved": approved,
-                "comments": comments or ("Approved by dispatcher" if approved else "Rejected by dispatcher"),
+                "comments": comments
+                or ("Approved by dispatcher" if approved else "Rejected by dispatcher"),
             }
         )
         return self.graph.invoke(resume_command, config=config)

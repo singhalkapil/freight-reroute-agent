@@ -107,7 +107,9 @@ class TestFreightAgentWorkflow:
         assert isinstance(state["thread_id"], str)
         assert len(state["thread_id"]) > 0
 
-    def test_disrupted_corridor_under_threshold_auto_approves(self, base_manifest, severe_weather_alert):
+    def test_disrupted_corridor_under_threshold_auto_approves(
+        self, base_manifest, severe_weather_alert
+    ):
         """Detour with surcharge < $5,000 and within SLA buffer auto-approves without manual interruption."""
         mock_weather = MagicMock(spec=NOAAWeatherClient)
         mock_weather.check_corridor_disruptions.return_value = [severe_weather_alert]
@@ -169,7 +171,10 @@ class TestFreightAgentWorkflow:
 
         # Graph paused at human_review
         assert state_at_interrupt["requires_human_review"] is True
-        assert state_at_interrupt["decision"].selected_route.additional_cost_usd > COST_APPROVAL_THRESHOLD_USD
+        assert (
+            state_at_interrupt["decision"].selected_route.additional_cost_usd
+            > COST_APPROVAL_THRESHOLD_USD
+        )
 
         # Checkpoint snapshot confirms pending interrupt
         snapshot = runner.get_state(thread_id)
@@ -227,7 +232,10 @@ class TestFreightAgentWorkflow:
         # Verified human approval is triggered solely by SLA breach (> 24h)
         assert state_at_interrupt["requires_human_review"] is True
         assert state_at_interrupt["decision"].requires_human_approval is True
-        assert state_at_interrupt["decision"].selected_route.additional_cost_usd < COST_APPROVAL_THRESHOLD_USD
+        assert (
+            state_at_interrupt["decision"].selected_route.additional_cost_usd
+            < COST_APPROVAL_THRESHOLD_USD
+        )
         assert "exceeds 24.0h threshold" in state_at_interrupt["decision"].rationale
 
         # Resume and complete

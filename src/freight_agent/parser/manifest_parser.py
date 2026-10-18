@@ -184,7 +184,9 @@ class UnstructuredManifestParser:
             ]
         )
         self.structured_llm = (
-            self.llm.with_structured_output(RawExtractedManifest) if self.llm is not None else None
+            self.llm.with_structured_output(RawExtractedManifest)
+            if self.llm is not None
+            else None
         )
 
     def _resolve_coordinates(
@@ -247,7 +249,7 @@ class UnstructuredManifestParser:
     def _extract_deterministic(self, text: str) -> RawExtractedManifest:
         """Extract structured manifest fields deterministically via regex when LLM is None."""
         id_match = (
-            re.search(r"(?:BOL|Shipment|Tracking|ID|Load)[:\s#\-]*([A-Za-z0-9\-]+)", text, re.I)
+            re.search(r"(?:Shipment\s*ID|BOL|Tracking|ID|Load|Shipment)[:\s#\-]*([A-Za-z0-9\-]+)", text, re.I)
             or re.search(r"\b([A-Z]{3,4}-\d{4,}[A-Za-z0-9\-]*)\b", text)
             or re.search(r"\b(SHP-[A-Za-z0-9\-]+)\b", text, re.I)
         )
@@ -256,8 +258,17 @@ class UnstructuredManifestParser:
         origin_match = re.search(r"\b(US[A-Z]{3})\b", text)
         origin_code = origin_match.group(1).upper() if origin_match else "USLAX"
 
-        dest_match = re.search(
-            r"(?:to|destined for|destination[:\s]+)\s*([A-Za-z0-9\s]+?)(?:\.|\n|,|$)", text, re.I
+        dest_match = (
+            re.search(
+                r"(?:destination|destined\s+for)[:\s]+(?:to\s+)?([A-Za-z0-9\s]+?)(?:\.|\n|,|\(|$)",
+                text,
+                re.I,
+            )
+            or re.search(
+                r"\bto\s+([A-Z]{2}[A-Za-z0-9]{3}|[A-Za-z0-9\s]+?)(?:\.|\n|,|\(|$)",
+                text,
+                re.I,
+            )
         )
         dest_str = "USCHI"
         if dest_match:
@@ -295,11 +306,7 @@ class UnstructuredManifestParser:
             deadline_str = deadline_match.group(1).replace(" ", "T")
             if "T" not in deadline_str:
                 deadline_str += "T00:00:00Z"
-            elif (
-                not deadline_str.endswith("Z")
-                and "+" not in deadline_str
-                and "-" not in deadline_str[10:]
-            ):
+            elif not deadline_str.endswith("Z") and "+" not in deadline_str and "-" not in deadline_str[10:]:
                 deadline_str += "Z"
         else:
             deadline_str = (datetime.now(UTC) + timedelta(days=3)).strftime("%Y-%m-%dT12:00:00Z")

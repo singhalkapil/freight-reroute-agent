@@ -483,9 +483,7 @@ Deadline: Delivery required before 2026-10-25T18:00:00Z.
 # Parses, sanitizes injections, resolves port coordinates, and returns immutable model
 manifest = parser.parse(raw_email_note)
 print(f"Validated Shipment ID: {manifest.shipment_id}")
-print(
-    f"Resolved Origin Port: {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude})"
-)
+print(f"Resolved Origin Port: {manifest.origin.port_code} ({manifest.origin.latitude}, {manifest.origin.longitude})")
 ```
 
 ---

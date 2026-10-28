@@ -29,3 +29,4 @@ class FreightAgentState(TypedDict, total=False):
     current_corridor_disrupted: bool
     requires_human_review: bool
     incident_advisory: IncidentAdvisoryBrief | dict | None
+    fmcsa_validation: dict | None

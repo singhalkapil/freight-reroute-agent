@@ -53,14 +53,18 @@ The core routing and evaluation engine is implemented as a compiled state graph 
 
 ```mermaid
 flowchart TD
-    START([Start / Shipment Ingestion]) --> N1[Node 1: inspect_manifest\nValidate SLA buffer & cold-chain shelf life]
+    START([Start / Shipment & Noisy Dispatch Ingestion]) --> N1[Node 1: inspect_manifest\nValidate SLA buffer & cold-chain shelf life]
     N1 --> N2[Node 2: detect_bottlenecks\nNOAA Weather GIS spatial intersection]
     
     N2 --> C1{Corridor Disrupted?}
     C1 -- No Disruption --> N5[Node 5: dispatch_tender\nGenerate Primary EDI 204 Load Tender]
     C1 -- Active Alert --> N3[Node 3: calculate_alternatives\nIntermodal Detour Solver: ROAD, RAIL, BARGE]
     
-    N3 --> ADV[Node: generate_advisory\nLLM Incident Brief & Driver Advisory\nStrictly Grounded in Deterministic Metrics]
+    N3 --> CGATE{Constraint Verification Gate\n- FMCSA 11h/14h Driving Limits\n- Cold-Chain Spoilage Threshold\n- Tariff Ceiling Surcharge Cap}
+    CGATE -- Non-Compliant / Exceeded --> N3_REFLECT[Agent Reflection & Re-routing\nBacktracks to compliant intermodal mode]
+    N3_REFLECT --> N3
+    
+    CGATE -- Compliant Route --> ADV[Node: generate_advisory\nLLM Incident Brief & Driver Advisory\nStrictly Grounded in Deterministic Metrics]
     
     ADV --> C2{Financial / SLA Gate\nAdditional Cost > $5,000 OR\nSLA Delay > 24 Hours?}
     
@@ -80,8 +84,8 @@ flowchart TD
     classDef success fill:#16a34a,stroke:#15803d,color:#ffffff,stroke-width:2px;
 
     class N1,N2,N3,N5 primary;
-    class ADV llm;
-    class C1,C2,C3 gate;
+    class ADV,N3_REFLECT llm;
+    class C1,C2,C3,CGATE gate;
     class N4 interrupt;
     class END_SUCCESS success;
 ```

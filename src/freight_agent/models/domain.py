@@ -299,3 +299,16 @@ class IncidentAdvisoryBrief(BaseModel):
         ..., min_length=1, description="Structured EDI 204 tender summary"
     )
     generated_at: datetime = Field(..., description="Timestamp of brief generation in UTC")
+
+
+class DisruptionIncidentEvent(BaseModel):
+    """Normalized real-world incident report extracted from messy dispatch feeds or emails."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    incident_id: str = Field(..., min_length=1, description="Incident tracking identifier")
+    corridor_location: str = Field(..., description="Highway, rail line, or port corridor affected")
+    severity: AlertSeverity = Field(..., description="Calculated disruption severity")
+    estimated_blockage_hours: float = Field(..., ge=0.0, description="Estimated downtime duration")
+    raw_message_snippet: str = Field(..., description="Excerpt of original dispatch communication")
+    action_recommended: str = Field(..., description="Immediate routing advisory")

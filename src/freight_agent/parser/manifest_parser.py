@@ -14,7 +14,14 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from freight_agent.models.domain import Coordinates, PortLocation, ShipmentManifest, ShipmentStatus
+from freight_agent.models.domain import (
+    AlertSeverity,
+    Coordinates,
+    DisruptionIncidentEvent,
+    PortLocation,
+    ShipmentManifest,
+    ShipmentStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -414,3 +421,40 @@ class UnstructuredManifestParser:
             return manifest
         except ValidationError as err:
             raise ManifestParserError(f"Failed to instantiate ShipmentManifest: {err}") from err
+
+    def parse_noisy_dispatch_event(self, dispatch_text: str) -> DisruptionIncidentEvent:
+        """Extract structured incident event from noisy WhatsApp, Slack, or carrier email text."""
+        sanitized = sanitize_manifest_input(dispatch_text, strict=self.strict_guardrails)
+
+        corridor_match = re.search(
+            r"\b(I-\d{1,3}|US-\d{1,3}|Route\s*\d+|Port\s+of\s+[A-Za-z]+|[A-Za-z\s]+Corridor)\b",
+            sanitized,
+            re.I,
+        )
+        corridor = corridor_match.group(1).strip() if corridor_match else "Primary Freight Corridor"
+
+        hours_match = (
+            re.search(
+                r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)\s*(?:blocked|closure|delay|shutdown|downtime)?",
+                sanitized,
+                re.I,
+            )
+            or re.search(
+                r"(?:closure|delay|blocked|downtime|halt)[^0-9\n]*(\d+(?:\.\d+)?)\s*(?:hours?|hrs?)",
+                sanitized,
+                re.I,
+            )
+        )
+        blockage_hours = float(hours_match.group(1)) if hours_match else 24.0
+
+        severity = AlertSeverity.CRITICAL if blockage_hours >= 24 else AlertSeverity.HIGH
+        incident_id = f"INC-{abs(hash(sanitized)) % 100000:05d}"
+
+        return DisruptionIncidentEvent(
+            incident_id=incident_id,
+            corridor_location=corridor,
+            severity=severity,
+            estimated_blockage_hours=blockage_hours,
+            raw_message_snippet=sanitized[:120].strip(),
+            action_recommended=f"Immediate detour calculation required to avoid {blockage_hours:.1f}h corridor halt.",
+        )

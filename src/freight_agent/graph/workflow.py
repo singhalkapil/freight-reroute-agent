@@ -162,6 +162,19 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
             else min(alternatives, key=lambda r: r.estimated_transit_hours)
         )
 
+        # Validate against FMCSA Hours of Service and cold-chain constraints
+        from freight_agent.constraints.fmcsa_validator import FMCSAConstraintValidator
+
+        fmcsa_res = FMCSAConstraintValidator.validate_reroute(shipment, selected_route)
+        if not fmcsa_res.is_compliant and viable_routes:
+            compliant_routes = [
+                r for r in viable_routes
+                if FMCSAConstraintValidator.validate_reroute(shipment, r).is_compliant
+            ]
+            if compliant_routes:
+                selected_route = min(compliant_routes, key=lambda r: r.additional_cost_usd)
+                fmcsa_res = FMCSAConstraintValidator.validate_reroute(shipment, selected_route)
+
         # Evaluate SLA delay breach for the selected detour
         now = datetime.now(UTC)
         estimated_arrival = now + timedelta(hours=selected_route.estimated_transit_hours)
@@ -213,6 +226,7 @@ def make_calculate_alternatives_node(route_solver: IntermodalRouteSolver | None 
             "candidate_routes": alternatives,
             "decision": decision,
             "requires_human_review": requires_approval,
+            "fmcsa_validation": fmcsa_res.model_dump(),
             "audit_log": [log_entry],
         }
 
